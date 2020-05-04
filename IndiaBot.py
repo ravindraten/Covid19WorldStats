@@ -18,6 +18,9 @@ regex = re.compile('[@_!#$%^&*()<>?/\|}{~:]')
 r = requests.get('https://api.covid19india.org/data.json')
 j = r.json()
 
+r = requests.get('https://api.covid19india.org/v2/state_district_wise.json')
+dist_data = r.json()
+
 rCountry = requests.get('http://corona-api.com/countries')
 jCountry = rCountry.json()
 
@@ -218,7 +221,7 @@ def topC(update, context):
                 confirmedN = each["latest_data"]["confirmed"]
                 if (i == confirmedN):
                     confirmedcountry.append(str(each["latest_data"]["confirmed"]))
-                    countryN.append(str(j+1)+">> "+str(each["name"]))
+                    countryN.append("No:"+str(j+1)+">> "+str(each["name"]))
                     j += 1
                     
         countryName_confirmed = ' \n'.join(["*"+str(a)+"*"+" has *"+ b +"* confirmed cases" for a,b in zip(countryN,confirmedcountry)])
@@ -264,7 +267,7 @@ def topD(update, context):
                 deathN = each["latest_data"]["deaths"]
                 if (i == deathN):
                     deathCountry.append(str(each["latest_data"]["deaths"]))
-                    countryN.append(str(j+1)+">> "+str(each["name"]))
+                    countryN.append("No:"+str(j+1)+">> "+str(each["name"]))
                     j += 1
 
         countryName_death = ' \n'.join(["*"+str(a)+"*"+" has *"+ b +"* deaths from Covid-19" for a,b in zip(countryN,deathCountry)])
@@ -289,6 +292,7 @@ def help(update,context):
     \n /statecode - Fetch statewise code \n\
     \n /state statecode - Fetch stats per state,\
     Now for karnataka use '/state KA' without the single quotes \n \
+    \n /districtwise - Fetch stats of confirmed cases district wise of a particular state using the state code \n\
     \n /world - Fetch stats for the entire world \n\
     \n /countrycode - Fetch country codes ,\n\
     To show all country names with starting letter I and thier respective code  use '/countrycode I' \n \
@@ -317,6 +321,7 @@ def start(update,context):
     \n /statecode - Fetch statewise code \n\
     \n /state statecode - Fetch stats per state,\
     Now for karnataka use '/state KA' without the single quotes \n \
+    \n /districtwise - Fetch stats of confirmed cases district wise of a particular state using the state code \n\
     \n /world - Fetch stats for the entire world \n\
     \n /countrycode - Fetch country codes ,\n\
     To show all country names with starting letter I and thier respective code  use '/countrycode I' \n \
@@ -433,7 +438,59 @@ def getLocation(update,context):
     logger.info("Location handler used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
     #context.bot.send_message(chat_id=update.message.chat_id, text="Would you mind sharing your location and contact with me?",reply_markup=reply_markup)
-    
+
+def ask_state_for_districtwise_msg():
+    return 'Which state\'s district count do you want?'
+
+def get_district_msg(state_name):
+    #dist_data = get_data('data_district.json')
+    #print(dist_data)
+    state_data = []
+    for s in dist_data:
+        if s['statecode'].lower() == state_name.lower().strip():
+            state_name = s['state']
+            state_data = s['districtData']
+            break
+    districtwise_msg = "No data found for State {state_name}".format(state_name=state_name)
+    if state_data != []:
+        state_data = sorted(state_data, key = lambda i: i['confirmed'],reverse=True)
+        districtwise_msg = "District-wise confirmed cases till now in {state_name}:\n".format(state_name=state_name)
+        for district in state_data:
+            formatted_district_data = "\n{confirmed:4} : {district_name}{delta_confirmed}".format(confirmed=district['confirmed'], delta_confirmed=get_delta_msg(district), district_name= district['district'])
+            districtwise_msg += formatted_district_data
+        districtwise_msg += "\n\n Data last updated at " + get_lastupdated_msg()
+    #print(districtwise_msg)
+    return districtwise_msg
+
+def get_delta_msg(district):
+    delta_msg = ""
+    if district['delta']['confirmed'] != 0:
+        delta_msg += "(+{delta_count})".format(delta_count=district['delta']['confirmed'])
+    return delta_msg
+
+def get_lastupdated_msg():
+    msg_lastupdated = j['statewise'][0]['lastupdatedtime']
+    print (msg_lastupdated)
+    return msg_lastupdated
+
+def districtwise(update: telegram.Update, context: CallbackContext):
+    message = ask_state_for_districtwise_msg()
+    chat_id = update.message.chat_id
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=message,
+        parse_mode=telegram.ParseMode.HTML,
+        reply_markup=telegram.ForceReply(),
+    )
+
+def handle_message(update: telegram.Update, context: CallbackContext):
+    if update.message.reply_to_message:
+        if (update.message.reply_to_message.text== ask_state_for_districtwise_msg()):
+            message = get_district_msg(update.message.text)
+    chat_id = update.message.chat_id
+    context.bot.send_message(
+        chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML
+    )    
 
 def main():
     BotToken = ""
@@ -450,16 +507,18 @@ def main():
     dp.add_handler(CommandHandler('start',start))
     dp.add_handler(CommandHandler('help',help))
     dp.add_handler(CommandHandler('india',india))
-    dp.add_handler(CommandHandler('indianState',indianstate))
+    dp.add_handler(CommandHandler('state',indianstate))
     dp.add_handler(CommandHandler('caps',caps))
     dp.add_handler(CommandHandler('world',world))
-    dp.add_handler(CommandHandler('indianStatecode',indian_state_code))
+    dp.add_handler(CommandHandler('statecode',indian_state_code))
     dp.add_handler(CommandHandler('countrycode',country_code))
     dp.add_handler(CommandHandler('country',countryWiseData))
     dp.add_handler(CommandHandler('official_TC',officialTelegramChannels))
     dp.add_handler(CommandHandler('topD',topD))
     dp.add_handler(CommandHandler('topC',topC))
     dp.add_handler(MessageHandler(Filters.location,getLocation))
+    dp.add_handler(CommandHandler('districtwise',districtwise))
+    dp.add_handler(MessageHandler(Filters.text, handle_message))
     updater.start_polling()
     updater.idle()
 
