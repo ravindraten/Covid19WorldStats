@@ -14,15 +14,18 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 today = date.today()
 regex = re.compile('[@_!#$%^&*()<>?/\|}{~:]')
+
 r = requests.get('https://api.covid19india.org/data.json')
 j = r.json()
 
 rCountry = requests.get('http://corona-api.com/countries')
 jCountry = rCountry.json()
 
+contents = requests.get("https://api.covid19api.com/summary").json()
+totalContent = requests.get("https://api.covid19api.com/world/total").json()
+
 def get_count_world():
-    contents = requests.get("https://api.covid19api.com/summary").json()
-    totalContent = requests.get("https://api.covid19api.com/world/total").json()
+    
     ijson = contents["Global"]
     TotalConfirmed = str(totalContent["TotalConfirmed"])
     NewConfirmed = str(ijson["NewConfirmed"])
@@ -48,8 +51,6 @@ def world(update, context):
     captureID(update)
     
 def new_count_India():
-    #r = requests.get('https://api.covid19india.org/data.json')
-    #j = r.json()
 
     for each in j["statewise"]:
         if str(each["state"]) == "Total":
