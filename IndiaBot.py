@@ -14,6 +14,11 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 today = date.today()
 regex = re.compile('[@_!#$%^&*()<>?/\|}{~:]')
+r = requests.get('https://api.covid19india.org/data.json')
+j = r.json()
+
+rCountry = requests.get('http://corona-api.com/countries')
+jCountry = rCountry.json()
 
 def get_count_world():
     contents = requests.get("https://api.covid19api.com/summary").json()
@@ -43,8 +48,8 @@ def world(update, context):
     captureID(update)
     
 def new_count_India():
-    r = requests.get('https://api.covid19india.org/data.json')
-    j = r.json()
+    #r = requests.get('https://api.covid19india.org/data.json')
+    #j = r.json()
 
     for each in j["statewise"]:
         if str(each["state"]) == "Total":
@@ -69,8 +74,6 @@ def india(update, context):
     captureID(update)
 
 def state_new_count_India(var):
-    r = requests.get('https://api.covid19india.org/data.json')
-    j = r.json()
 
     for each in j["statewise"]:
         if str(each["statecode"]) == var:
@@ -103,16 +106,6 @@ def indianstate(update, context):
     print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
 
 def indian_state_code(update, context):
-    r = requests.get('https://api.covid19india.org/data.json')
-    j = r.json()
-    #print (j['statewise'])
-    """ for each in j['statewise']:
-        stateName = str(each["state"]) 
-        statecode = str(each["statecode"])
-        chat_id = update.message.chat_id
-        context.bot.send_message(chat_id=chat_id, text="For *"+stateName+"* use code:*"+statecode+"*",parse_mode=telegram.ParseMode.MARKDOWN)
-        captureID(update) """
-    
     state = []
     code = []
     for each in j['statewise']:    
@@ -137,8 +130,7 @@ def country_code(update, context):
     elif(regex.search(var)) == None:
         letter = var.capitalize()
         print(letter)
-        rCountry = requests.get('http://corona-api.com/countries')
-        jCountry = rCountry.json()
+        
         #print (j['statewise'])
         """ for each in jCountry['data']:
             countryName = str(each["name"]) 
@@ -163,10 +155,8 @@ def country_code(update, context):
     logger.info("Country code handler used ", update.message.chat.id, update.message.from_user.first_name)
 
 def countryWiseStatsCollect(var):
-    rC = requests.get('http://corona-api.com/countries')
-    jC = rC.json()
     print(str(var).upper())
-    for each in jC["data"]:
+    for each in jCountry["data"]:
         if str(each["code"]) == str(var).upper():
             confirmed = str(each["latest_data"]["confirmed"]) 
             deaths = str(each["latest_data"]["deaths"]) 
@@ -193,8 +183,6 @@ def countryWiseData(update, context):
 
 def topC(update, context):
     var = ' '.join(context.args)
-    rC = requests.get('http://corona-api.com/countries')
-    jC = rC.json()
     #res = isinstance(var, str)
     country = []
     country_code = []
@@ -213,7 +201,7 @@ def topC(update, context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.message.chat_id, text="Add a number below 50 with the handler to get results, Ex: '/topD 10",parse_mode=telegram.ParseMode.MARKDOWN)
     elif(regex.search(var)) == None:
-        for each in jC["data"]:
+        for each in jCountry["data"]:
             confirmed.append(each["latest_data"]["confirmed"])
             country.append(str(each["name"]))
             country_code.append(str(each["code"]))
@@ -225,7 +213,7 @@ def topC(update, context):
         #print(top)
         j=0
         for i in top:
-            for each in jC["data"]:
+            for each in jCountry["data"]:
                 confirmedN = each["latest_data"]["confirmed"]
                 if (i == confirmedN):
                     confirmedcountry.append(str(each["latest_data"]["confirmed"]))
@@ -246,8 +234,6 @@ def topC(update, context):
 
 def topD(update, context):
     var = ' '.join(context.args)
-    rC = requests.get('http://corona-api.com/countries')
-    jC = rC.json()
     #res = isinstance(var, str)
     country = []
     deaths = []
@@ -263,7 +249,7 @@ def topD(update, context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.message.chat_id, text="Add a number below 50 with the handler to get results, Ex: '/topD 10",parse_mode=telegram.ParseMode.MARKDOWN)
     elif(regex.search(var)) == None:
-        for each in jC["data"]:
+        for each in jCountry["data"]:
             country.append(str(each["name"]))
             deaths.append(each["latest_data"]["deaths"])
         #print(confirmed)
@@ -273,7 +259,7 @@ def topD(update, context):
         #print(top)
         j=0
         for i in top:
-            for each in jC["data"]:
+            for each in jCountry["data"]:
                 deathN = each["latest_data"]["deaths"]
                 if (i == deathN):
                     deathCountry.append(str(each["latest_data"]["deaths"]))
@@ -416,8 +402,6 @@ def getLocation(update,context):
     country = contents["address"]["country_code"]
     if country == "in":
         state = contents["address"]["state"]
-        r = requests.get('https://api.covid19india.org/data.json')
-        j = r.json()
         for each in j["statewise"]:
             if str(each["state"]) == state:
                 confirmed = str(each["confirmed"]) 
@@ -445,7 +429,7 @@ def getLocation(update,context):
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
     
-    logger.info("Country handler used ", update.message.chat.id, update.message.from_user.first_name)
+    logger.info("Location handler used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
     #context.bot.send_message(chat_id=update.message.chat_id, text="Would you mind sharing your location and contact with me?",reply_markup=reply_markup)
     
