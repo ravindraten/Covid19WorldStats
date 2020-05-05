@@ -11,11 +11,12 @@ I am using GCP instance to host the bot.
 
 #API used to collect data are from below:
 
-https://www.covid19india.org/  
-https://about-corona.net/documentation
-https://api.covid19api.com/summary
+https://www.covid19india.org/  \n
+https://about-corona.net/documentation \n
+https://api.covid19api.com/summary \n
 
 #To get location data I am using: 
 
-https://locationiq.com  
+https://locationiq.com  \n
+http://apis.mapmyindia.com
 
