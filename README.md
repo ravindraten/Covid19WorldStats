@@ -18,5 +18,5 @@ I am using GCP instance to host the bot.
 ### To get location data I am using: 
 
 - https://locationiq.com
-- http://apis.mapmyindia.com
+- http://mapmyindia.com
 
