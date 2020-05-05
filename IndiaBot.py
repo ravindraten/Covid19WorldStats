@@ -402,8 +402,6 @@ def getLocation(update,context):
     print(current_lon)
     APIKey = ""
     contents = requests.get("https://locationiq.com/v1/reverse.php?key="+APIKey+"&lat="+current_lat+"&lon="+current_lon+"&format=json").json()
-    #rC = requests.get(url)
-    #g = geocoder.locationiq([current_lat, current_lon], key='c244e88d03bde9', method='reverse')
     countryName = contents["address"]["country"]
     country = contents["address"]["country_code"]
     if country == "in":
