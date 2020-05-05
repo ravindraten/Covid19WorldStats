@@ -162,7 +162,7 @@ def countryWiseStatsCollect(var):
     print(str(var).upper())
     for each in jCountry["data"]:
         if str(each["code"]) == str(var).upper():
-            confirmed = str(each["latest_data"]["confirmed"]) 
+            confirmed = str(each["latest_data"]["confirmed"])
             deaths = str(each["latest_data"]["deaths"]) 
             recovered = str(each["latest_data"]["recovered"])
             populationHere = str(each["population"])
@@ -454,9 +454,9 @@ def get_district_msg(state_name):
     districtwise_msg = "No data found for State {state_name}".format(state_name=state_name)
     if state_data != []:
         state_data = sorted(state_data, key = lambda i: i['confirmed'],reverse=True)
-        districtwise_msg = "District-wise confirmed cases till now in {state_name}:\n".format(state_name=state_name)
+        districtwise_msg = "District-wise confirmed cases, new cases, recovered cases and death cases till now in <b>{state_name}</b> \n\n<b>NC</b> = New cases \n<b>TR</b> = Total recovered cases\n<b>TD</b> = Total death cases \n".format(state_name=state_name)
         for district in state_data:
-            formatted_district_data = "\n{confirmed:4} : {district_name}{delta_confirmed}".format(confirmed=district['confirmed'], delta_confirmed=get_delta_msg(district), district_name= district['district'])
+            formatted_district_data = "\n{confirmed:4} : <b>{district_name}</b>  NC:{delta_confirmed} TR:{recovered} TD:{death}".format(confirmed=district['confirmed'], delta_confirmed=get_delta_msg(district), district_name= district['district'], recovered=get_msg_r(district), death=get_msg_d(district))
             districtwise_msg += formatted_district_data
         districtwise_msg += "\n\n Data last updated at " + get_lastupdated_msg()
     #print(districtwise_msg)
@@ -466,7 +466,25 @@ def get_delta_msg(district):
     delta_msg = ""
     if district['delta']['confirmed'] != 0:
         delta_msg += "(+{delta_count})".format(delta_count=district['delta']['confirmed'])
+    elif district['delta']['confirmed'] == 0:
+        delta_msg += "0"
     return delta_msg
+
+def get_msg_r(district):
+    msg_r = ""
+    if district['recovered'] != 0:
+        msg_r += "(+{count})".format(count=district['recovered'])
+    elif district['recovered'] == 0:
+        msg_r += "0"
+    return msg_r
+
+def get_msg_d(district):
+    msg_d = ""
+    if district['deceased'] != 0:
+        msg_d += "(+{count})".format(count=district['deceased'])
+    elif district['deceased'] == 0:
+        msg_d += "0"
+    return msg_d
 
 def get_lastupdated_msg():
     msg_lastupdated = j['statewise'][0]['lastupdatedtime']
