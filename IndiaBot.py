@@ -3,11 +3,12 @@ import telegram
 import requests
 import re
 import json
-from datetime import date
+from datetime import date,datetime
 import logging
 from functools import wraps
 import numbers
 import geocoder
+import pyshorteners
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
@@ -26,6 +27,15 @@ jCountry = rCountry.json()
 
 contents = requests.get("https://api.covid19api.com/summary").json()
 totalContent = requests.get("https://api.covid19api.com/world/total").json()
+
+continent = requests.get('https://corona.lmao.ninja/v2/continents?yesterday=true&sort')
+continent_v = continent.json()
+
+rUS = requests.get('https://covidtracking.com/api/states/info')
+jstates = rUS.json()
+
+rUS_states = requests.get('https://covidtracking.com/api/states')
+states_us = rUS_states.json()
 
 APIKey_LQ = ""
 API_key_M = ""
@@ -302,26 +312,37 @@ def help(update,context):
     context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     context.bot.send_message(chat_id=update.message.chat_id, text= "\
     \n \
-    \n <b><u>Commands:</u></b> \n \
-    \n /india - Fetch stats of India \n\
-    \n /statecode - Fetch statewise code \n\
-    \n /state statecode - Fetch stats per state,\
+    \n<b><u>Commands:</u></b> \n \
+    \n/india - Fetch stats of India \n\
+    \n/statecode - Fetch statewise code \n\
+    \n/state statecode - Fetch stats per state,\
     Now for karnataka use '/state KA' without the single quotes \n \
-    \n /districtwise - Fetch stats district wise of a particular state using the state code \n\
-    \n /world - Fetch stats for the entire world \n\
-    \n /countrycode - Fetch country codes ,\n\
+    \n/districtwise - Fetch stats district wise of a particular state using the state code \n\
+    \n/world - Fetch stats for the entire world \n\
+    \n/countrycode - Fetch country codes ,\n\
     To show all country names with starting letter I and thier respective code  use '/countrycode I' \n \
-    \n /country countrycode - Fetch country wise stats,\n \
+    \n/country countrycode - Fetch country wise stats,\n \
     Now for showing stats of Netherlands use '/country NL' \n\
-    \n /topC number - Fetch top countries with highest confirmed covid-19 cases, \n\
+    \n/topC number - Fetch top countries with highest confirmed covid-19 cases, \n\
     Now to show Top 10 countries use '/topC 10' without the single quotes \n\
-    \n /topD number - Fetch top countries with highest death due to covid-19, \n\
+    \n/topD number - Fetch top countries with highest death due to covid-19, \n\
     Now to show Top 10 countries use '/topD 10' without the single quotes \n\
     \n \
     \nYou can now <b>share your current location</b> and get the stats,\
     \nIf you share your location inside <b>India</b> then you get <b>statewise</b> stats, \n\
-    \nIf you share any location outside India then you get that specific <b>country</b> stats, \n\
+    \nIf you share your location inside <b>USA</b> then you get <b>statewise</b> stats, \n\
+    \nIf you share any location outside India and USA then you get that specific <b>country</b> stats, \n\
     \n<b>Just point the pin on the map and share it</b> \n \
+    \n\
+    \n/ListUSAStateCodes - Lists all 56 state codes \n\
+    \n/USAState statecode - Fetch stats per state,\n\
+    Now for NewYork use '/USAState NY' without the single quotes \n \
+    \n/asia - Fetch stats of Asia\n \
+    \n/africa - Fetch stats of Africa\n \
+    \n/europe - Fetch stats of Europe\n \
+    \n/australia - Fetch stats of Australia\n \
+    \n/northamerica - Fetch stats of North America\n \
+    \n/southamerica - Fetch stats of South America\n \
     \n /official_TC to see official Telegram channels of other countries \
     ",parse_mode=telegram.ParseMode.HTML,disable_web_page_preview=True)
     print(update.message.from_user.username)
@@ -331,27 +352,40 @@ def start(update,context):
     context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     context.bot.send_message(chat_id=update.message.chat.id, text="<b>Welcome to The Covid-19 Tracker Bot! 🦠</b> \
     \n \
-    \n <b><u>You can use these Commands:</u></b> \n \
-    \n /india - Fetch stats of India \n\
-    \n /statecode - Fetch statewise code \n\
-    \n /state statecode - Fetch stats per state,\
+    \n<b><u>You can use these Commands:</u></b> \n \
+    \n/india - Fetch stats of India \n\
+    \n/statecode - Fetch statewise code \n\
+    \n/state statecode - Fetch stats per state,\
     Now for karnataka use '/state KA' without the single quotes \n \
-    \n /districtwise - Fetch stats district wise of a particular state using the state code \n\
-    \n /world - Fetch stats for the entire world \n\
-    \n /countrycode - Fetch country codes ,\n\
+    \n/districtwise - Fetch stats district wise of a particular state using the state code \n\
+    \n/world - Fetch stats for the entire world \n\
+    \n/countrycode - Fetch country codes ,\n\
     To show all country names with starting letter I and thier respective code  use '/countrycode I' \n \
-    \n /country countrycode - Fetch country wise stats,\n \
+    \n/country countrycode - Fetch country wise stats,\n \
     Now for showing stats of Netherlands use '/country NL' \n\
-    \n /topC number - Fetch top countries with highest confirmed covid-19 cases, \n\
+    \n/topC number - Fetch top countries with highest confirmed covid-19 cases, \n\
     Now to show Top 10 countries use '/topC 10' without the single quotes \n\
-    \n /topD number - Fetch top countries with highest death due to covid-19, \n\
+    \n/topD number - Fetch top countries with highest death due to covid-19, \n\
     Now to show Top 10 countries use '/topD 10' without the single quotes \n\
     \n \
     \nYou can now <b>share your current location</b> and get the stats,\
     \nIf you share your location inside <b>India</b> then you get <b>statewise</b> stats, \n\
-    \nIf you share any location outside India then you get that specific <b>country</b> stats, \n\
+    \nIf you share your location inside <b>USA</b> then you get <b>statewise</b> stats, \n\
+    \nIf you share any location outside India and USA then you get that specific <b>country</b> stats, \n\
     \n<b>Just point the pin on the map and share it</b> \n \
     \n \
+    \n<b>Fetch Stats for USA</b>\
+    \n/ListUSAStateCodes - Lists all 56 state codes \n\
+    \n/USAState statecode - Fetch stats per state,\n\
+    Now for NewYork use '/USAState NY' without the single quotes \n \
+    \n\
+    \n<b>Fetch stats Continent wise</b> \
+    \n/asia - Fetch stats of Asia\n \
+    \n/africa - Fetch stats of Africa\n \
+    \n/europe - Fetch stats of Europe\n \
+    \n/australia - Fetch stats of Australia\n \
+    \n/northamerica - Fetch stats of North America\n \
+    \n/southamerica - Fetch stats of South America\n \
     \n Data from - https://www.covid19india.org/  \
     \n             https://about-corona.net/documentation \
     \n \
@@ -366,10 +400,6 @@ def start(update,context):
     print(update.message.chat.id)
     captureID(update)
     logger.info("Start handler used ", update.message.chat.id, update.message.from_user.first_name)
-    
-def caps(update, context):
-    text_caps = ' '.join(context.args).upper()
-    context.bot.send_message(chat_id=update.effective_chat.id, text=text_caps)
 
 def captureID(update):
     f= open("userID.txt","w+")
@@ -437,7 +467,19 @@ def getLocation(update,context):
         \nThe number of *newcases* as of today in this state are: *"+deltaconfirmed+"*\
         \nThis data was last updated at : *"+lastupdatedtime+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocation1(update,context,current_lat,current_lon,lastupdatedtime)
-
+        links(context,update,current_lat,current_lon)
+    elif country == "us":
+        state = contents["address"]["state"]
+        print(state)
+        for each in jstates:
+            if str(each["name"]) == state:
+                value = us_statewise_stats(str(each["state"]))
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+state+"*: *"+value[0]+"*\
+        \nThe number of *deaths* in this state are: *"+value[1]+"*\
+        \nThe number of *recovered* people in this state are: *"+value[2]+"*\
+        \nThis data was last updated at : *2020/"+value[3]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        links(context,update,current_lat,current_lon)
     else :#country = url['country_code']
         content_k = countryWiseStatsCollect(country)
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
@@ -452,6 +494,14 @@ def getLocation(update,context):
     logger.info("Location handler used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
     #context.bot.send_message(chat_id=update.message.chat_id, text="Would you mind sharing your location and contact with me?",reply_markup=reply_markup)
+
+def links(context,update,current_lat,current_lon):
+    s = pyshorteners.Shortener()
+    response = s.tinyurl.short("https://www.google.com/maps/search/food+shelters/@"+current_lat+","+current_lon+",13z")
+    context.bot.send_message(chat_id=update.effective_chat.id, text="*Below you can find the food shelters in this area*\n"+response,parse_mode=telegram.ParseMode.MARKDOWN)
+    s = pyshorteners.Shortener()
+    response1 = s.tinyurl.short("https://www.google.com/maps/search/night+shelters/@"+current_lat+","+current_lon+",12z")
+    context.bot.send_message(chat_id=update.effective_chat.id, text="*Below you can find the Night shelters in this area*\n"+response1,parse_mode=telegram.ParseMode.MARKDOWN)
 
 def ask_state_for_districtwise_msg():
     return 'Which state\'s district count do you want?'
@@ -585,6 +635,156 @@ def getLocation1(update, context, var, var1, time_u):
     logger.info("location for district handler used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
 
+def us_statewise(update, context):
+    state_us = []
+    code_us = []
+    stateCount = str(len(jstates))
+    for each in jstates:    
+        state_us.append(each["name"])
+        code_us.append(each["state"])
+    
+    StateName_StateCode = ' \n'.join(["For "+ str(a) +" use code "+ b for a,b in zip(state_us,code_us)])
+    chat_id = update.message.chat_id
+    context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+    context.bot.send_message(chat_id=chat_id, text="There are *"+stateCount+"* States in USA. Below are the names and their codes\n\n\n*"+StateName_StateCode+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    logger.info("US State code handler used ", update.message.chat.id, update.message.from_user.first_name)   
+    captureID(update)
+
+def us_statewise_stats(var):
+    
+    for each in states_us:
+        if str(each["state"]) == var:
+           confirmed = str(each["positive"]) 
+           deaths = str(each["death"]) 
+           recovered = str(each["recovered"])
+           lastupdatedtime = str(each["lastUpdateEt"])
+    return confirmed,deaths,recovered,lastupdatedtime
+
+def getUS_stateName(var):
+    for each in jstates:
+        if str(each["state"]) == var:   
+            state_name1 = str(each["name"])
+    return state_name1
+
+def usa_state(update, context):
+    us_state_code = ' '.join(context.args).upper()
+    print(us_state_code)
+    if (us_state_code.isdigit()):
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.message.chat_id, text="Add a statecode, Ex: '/USAState AK'",parse_mode=telegram.ParseMode.MARKDOWN)
+    elif us_state_code == "":
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.message.chat_id, text="Add a statecode, Ex: '/USAState AK'",parse_mode=telegram.ParseMode.MARKDOWN)
+    elif(regex.search(us_state_code)) == None:
+        content_k = us_statewise_stats(us_state_code)
+        sN = getUS_stateName(us_state_code)
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The number of *confirmed* cases in *"+sN+"* are: *"+content_k[0]+"*\
+        \nThe number of *deaths* in this state are: *"+content_k[1]+"*\
+        \nThe number of *recovered* people in this state are: *"+content_k[2]+"*\
+        \nThis data was last updated at : *2020/"+content_k[3]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    else:
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.message.chat_id, text="Add a statecode correctly , Ex: '/USAState AK",parse_mode=telegram.ParseMode.MARKDOWN)   
+    logger.info("State handler used ", update.message.chat.id, update.message.from_user.first_name)
+    print("This User checked "+sN+":"+update.message.from_user.first_name)
+    captureID(update)
+
+def continent_count(var):
+    for each in continent_v:
+        if str(each["continent"]) == var:
+           confirmed = str(each["cases"]) 
+           deaths = str(each["deaths"]) 
+           recovered = str(each["recovered"])
+           deltaconfirmed = str(each["todayCases"])
+           deltadeaths = str(each["todayDeaths"])
+           lastUpdatedTime = str(datetime.fromtimestamp((each["updated"])/1000).replace(microsecond=0))
+    return confirmed,deaths,recovered,deltaconfirmed,deltadeaths,lastUpdatedTime
+
+def asia(update, context):
+    continentCount = continent_count("Asia")
+    chat_id = update.message.chat_id
+    context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+    context.bot.send_message(chat_id=chat_id, text="The total number of *infected* people in *Asia* are: *"+continentCount[0]+"*\
+    \nThe total number of *deaths* are: *"+continentCount[1]+"*\
+    \nThe total number of *recovered* people are: *"+continentCount[2]+"*\
+    \nThe number of *newcases* as of today are: *"+continentCount[3]+"*\
+    \nThe number of *deaths* as of today are: *"+continentCount[4]+"*\
+    \nThis data was last updated at of : *"+continentCount[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    print("This User checked Asia: "+update.message.from_user.first_name)
+    logger.info("Asia handler used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
+def africa(update, context):
+    continentCount = continent_count("Africa")
+    chat_id = update.message.chat_id
+    context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+    context.bot.send_message(chat_id=chat_id, text="The total number of *infected* people in *Africa* are: *"+continentCount[0]+"*\
+    \nThe total number of *deaths* are: *"+continentCount[1]+"*\
+    \nThe total number of *recovered* people are: *"+continentCount[2]+"*\
+    \nThe number of *newcases* as of today are: *"+continentCount[3]+"*\
+    \nThe number of *deaths* as of today are: *"+continentCount[4]+"*\
+    \nThis data was last updated at of : *"+continentCount[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    print("This User checked Asia: "+update.message.from_user.first_name)
+    logger.info("Africa handler used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
+def northamerica(update, context):
+    continentCount = continent_count("North America")
+    chat_id = update.message.chat_id
+    context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+    context.bot.send_message(chat_id=chat_id, text="The total number of *infected* people in *North America* are: *"+continentCount[0]+"*\
+    \nThe total number of *deaths* are: *"+continentCount[1]+"*\
+    \nThe total number of *recovered* people are: *"+continentCount[2]+"*\
+    \nThe number of *newcases* as of today are: *"+continentCount[3]+"*\
+    \nThe number of *deaths* as of today are: *"+continentCount[4]+"*\
+    \nThis data was last updated at of : *"+continentCount[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    print("This User checked Asia: "+update.message.from_user.first_name)
+    logger.info("North America handler used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
+def europe(update, context):
+    continentCount = continent_count("Europe")
+    chat_id = update.message.chat_id
+    context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+    context.bot.send_message(chat_id=chat_id, text="The total number of *infected* people in *Europe* are: *"+continentCount[0]+"*\
+    \nThe total number of *deaths* are: *"+continentCount[1]+"*\
+    \nThe total number of *recovered* people are: *"+continentCount[2]+"*\
+    \nThe number of *newcases* as of today are: *"+continentCount[3]+"*\
+    \nThe number of *deaths* as of today are: *"+continentCount[4]+"*\
+    \nThis data was last updated at of : *"+continentCount[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    print("This User checked Asia: "+update.message.from_user.first_name)
+    logger.info("Europe handler used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
+def southamerica(update, context):
+    continentCount = continent_count("South America")
+    chat_id = update.message.chat_id
+    context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+    context.bot.send_message(chat_id=chat_id, text="The total number of *infected* people in *South America* are: *"+continentCount[0]+"*\
+    \nThe total number of *deaths* are: *"+continentCount[1]+"*\
+    \nThe total number of *recovered* people are: *"+continentCount[2]+"*\
+    \nThe number of *newcases* as of today are: *"+continentCount[3]+"*\
+    \nThe number of *deaths* as of today are: *"+continentCount[4]+"*\
+    \nThis data was last updated at of : *"+continentCount[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    print("This User checked Asia: "+update.message.from_user.first_name)
+    logger.info("South America handler used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
+def australia(update, context):
+    continentCount = continent_count("Oceania")
+    chat_id = update.message.chat_id
+    context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+    context.bot.send_message(chat_id=chat_id, text="The total number of *infected* people in *Australia* are: *"+continentCount[0]+"*\
+    \nThe total number of *deaths* are: *"+continentCount[1]+"*\
+    \nThe total number of *recovered* people are: *"+continentCount[2]+"*\
+    \nThe number of *newcases* as of today are: *"+continentCount[3]+"*\
+    \nThe number of *deaths* as of today are: *"+continentCount[4]+"*\
+    \nThis data was last updated at of : *"+continentCount[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    print("This User checked Asia: "+update.message.from_user.first_name)
+    logger.info("Australia handler used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
 def main():
     BotToken = ""
     updater = Updater(BotToken,use_context=True)
@@ -601,7 +801,6 @@ def main():
     dp.add_handler(CommandHandler('help',help))
     dp.add_handler(CommandHandler('india',india))
     dp.add_handler(CommandHandler('state',indianstate))
-    dp.add_handler(CommandHandler('caps',caps))
     dp.add_handler(CommandHandler('world',world))
     dp.add_handler(CommandHandler('statecode',indian_state_code))
     dp.add_handler(CommandHandler('countrycode',country_code))
@@ -609,9 +808,16 @@ def main():
     dp.add_handler(CommandHandler('official_TC',officialTelegramChannels))
     dp.add_handler(CommandHandler('topD',topD))
     dp.add_handler(CommandHandler('topC',topC))
-    #dp.add_handler(MessageHandler(Filters.location,getLocation))
     dp.add_handler(MessageHandler(Filters.location,getLocation))
     dp.add_handler(CommandHandler('districtwise',districtwise))
+    dp.add_handler(CommandHandler('ListUSAStateCodes',us_statewise))
+    dp.add_handler(CommandHandler('USAState',usa_state))
+    dp.add_handler(CommandHandler('asia',asia))
+    dp.add_handler(CommandHandler('africa',africa))
+    dp.add_handler(CommandHandler('europe',europe))
+    dp.add_handler(CommandHandler('northamerica',northamerica))
+    dp.add_handler(CommandHandler('southamerica',southamerica))
+    dp.add_handler(CommandHandler('australia',australia))
     dp.add_handler(MessageHandler(Filters.text, handle_message))
     updater.start_polling()
     updater.idle()
