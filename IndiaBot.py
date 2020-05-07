@@ -9,6 +9,7 @@ from functools import wraps
 import numbers
 import geocoder
 import pyshorteners
+from pyshorteners import Shorteners
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
@@ -335,6 +336,7 @@ def help(update,context):
     \n<b>Just point the pin on the map and share it</b> \n \
     \n\
     \n/ListUSAStates - Lists all 56 state codes \n\
+    To show all state names with starting letter N and thier respective code  use '/ListUSAStates N' \n \
     \n/USAState statecode - Fetch stats per state,\n\
     Now for NewYork use '/USAState NY' without the single quotes \n \
     \n/asia - Fetch stats of Asia\n \
@@ -376,6 +378,7 @@ def start(update,context):
     \n \
     \n<b>Fetch Stats for USA</b>\
     \n/ListUSAStates - Lists all 56 state codes \n\
+    To show all state names with starting letter N and thier respective code  use '/ListUSAStates N' \n \
     \n/USAState statecode - Fetch stats per state,\n\
     Now for NewYork use '/USAState NY' without the single quotes \n \
     \n\
@@ -496,11 +499,11 @@ def getLocation(update,context):
     #context.bot.send_message(chat_id=update.message.chat_id, text="Would you mind sharing your location and contact with me?",reply_markup=reply_markup)
 
 def links(context,update,current_lat,current_lon):
-    s = pyshorteners.Shortener()
-    response = s.tinyurl.short("https://www.google.com/maps/search/food+shelters/@"+current_lat+","+current_lon+",13z")
+    s = pyshorteners.Shortener(Shorteners.TINYURL)
+    response = s.short("https://www.google.com/maps/search/food+shelters/@"+current_lat+","+current_lon+",13z")
     context.bot.send_message(chat_id=update.effective_chat.id, text="*Below you can find the food shelters in this area*\n"+response,parse_mode=telegram.ParseMode.MARKDOWN)
-    s = pyshorteners.Shortener()
-    response1 = s.tinyurl.short("https://www.google.com/maps/search/night+shelters/@"+current_lat+","+current_lon+",12z")
+    s = pyshorteners.Shortener(Shorteners.TINYURL)
+    response1 = s.short("https://www.google.com/maps/search/night+shelters/@"+current_lat+","+current_lon+",12z")
     context.bot.send_message(chat_id=update.effective_chat.id, text="*Below you can find the Night shelters in this area*\n"+response1,parse_mode=telegram.ParseMode.MARKDOWN)
 
 def ask_state_for_districtwise_msg():
@@ -616,11 +619,8 @@ def getLocation1(update, context, var, var1, time_u):
     state = rdj[stateName]
     try:
         confirmed_d = str(state["districtData"][dist]["confirmed"])
-        print(confirmed_d)
         new_case = str(state["districtData"][dist]["delta"]["confirmed"])
-        print(new_case)
         death = str(state["districtData"][dist]["delta"]["deceased"])
-        print(death)
         recovered = str(state["districtData"][dist]["recovered"])
         print(recovered)
         context.bot.send_message(chat_id=update.message.chat_id,text="You are currently located in or the Map location shared is in *"+dist+"*\
