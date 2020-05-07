@@ -38,6 +38,9 @@ jstates = rUS.json()
 rUS_states = requests.get('https://covidtracking.com/api/states')
 states_us = rUS_states.json()
 
+us_county = requests.get('https://corona.lmao.ninja/v2/jhucsse/counties')
+county_us = us_county.json()
+
 APIKey_LQ = ""
 API_key_M = ""
 
@@ -482,6 +485,7 @@ def getLocation(update,context):
         \nThe number of *deaths* in this state are: *"+value[1]+"*\
         \nThe number of *recovered* people in this state are: *"+value[2]+"*\
         \nThis data was last updated at : *2020/"+value[3]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        getLocation2(update,context,current_lat,current_lon)
         links(context,update,current_lat,current_lon)
     else :#country = url['country_code']
         content_k = countryWiseStatsCollect(country)
@@ -492,6 +496,7 @@ def getLocation(update,context):
         \nThe number of *cured* people in this country are: *"+content_k[2]+"*\
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        links(context,update,current_lat,current_lon)
         print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
     
     logger.info("Location handler used ", update.message.chat.id, update.message.from_user.first_name)
@@ -703,6 +708,33 @@ def usa_state(update, context):
         context.bot.send_message(chat_id=update.message.chat_id, text="Add a statecode correctly , Ex: '/USAState AK",parse_mode=telegram.ParseMode.MARKDOWN)   
     logger.info("State handler used ", update.message.chat.id, update.message.from_user.first_name)
     print("This User checked "+sN+":"+update.message.from_user.first_name)
+    captureID(update)
+
+def getLocation2(update, context, var, var1):
+    current_lat = var
+    current_lon = var1
+    
+    contents = requests.get("https://locationiq.com/v1/reverse.php?key="+APIKey_LQ+"&lat="+current_lat+"&lon="+current_lon+"&format=json").json()
+    county = contents["address"]["county"]
+    #countyName = county.split(' ',1)[0]
+    countyName = str((county.replace("County","")).strip())
+    for each in county_us:
+        if str(each["county"]) == countyName:
+            confirmed = str(each["stats"]["confirmed"]) 
+            deaths = str(each["stats"]["deaths"]) 
+            recovered = str(each["stats"]["recovered"])
+            updatedAt = str(each["updatedAt"])
+    print(countyName)
+    try:
+        context.bot.send_message(chat_id=update.message.chat_id,text="You are currently located in or the Map location shared is in county *"+countyName+"*\
+        \nThe number of *confirmed* cases in this county are: *"+confirmed+"*\
+        \nThe number of *deaths* are: *"+deaths+"*\
+        \nThe number of *recovered* people are: *"+recovered+"*\
+        \nthis data was last updated at *"+updatedAt+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The data for county *"+countyName+"* is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
+
+    logger.info("location for county handler used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
 
 def continent_count(var):
