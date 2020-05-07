@@ -83,7 +83,7 @@ def india(update, context):
     context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     context.bot.send_message(chat_id=chat_id, text="The number of *infected* people in *India* are: *"+content[0]+"*\
     \n The number of *deaths* are: *"+content[1]+"*\
-    \n The number of *cured* people are: *"+content[2]+"*\
+    \n The number of *recovered* people are: *"+content[2]+"*\
     \n The number of *newcases* as of today are: *"+content[3]+"*\
     \n This data was last updated at : *"+content[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     print("This User checked India: "+update.message.from_user.first_name)
@@ -334,7 +334,7 @@ def help(update,context):
     \nIf you share any location outside India and USA then you get that specific <b>country</b> stats, \n\
     \n<b>Just point the pin on the map and share it</b> \n \
     \n\
-    \n/ListUSAStateCodes - Lists all 56 state codes \n\
+    \n/ListUSAStates - Lists all 56 state codes \n\
     \n/USAState statecode - Fetch stats per state,\n\
     Now for NewYork use '/USAState NY' without the single quotes \n \
     \n/asia - Fetch stats of Asia\n \
@@ -375,7 +375,7 @@ def start(update,context):
     \n<b>Just point the pin on the map and share it</b> \n \
     \n \
     \n<b>Fetch Stats for USA</b>\
-    \n/ListUSAStateCodes - Lists all 56 state codes \n\
+    \n/ListUSAStates - Lists all 56 state codes \n\
     \n/USAState statecode - Fetch stats per state,\n\
     Now for NewYork use '/USAState NY' without the single quotes \n \
     \n\
@@ -636,17 +636,32 @@ def getLocation1(update, context, var, var1, time_u):
     captureID(update)
 
 def us_statewise(update, context):
-    state_us = []
-    code_us = []
-    stateCount = str(len(jstates))
-    for each in jstates:    
-        state_us.append(each["name"])
-        code_us.append(each["state"])
-    
-    StateName_StateCode = ' \n'.join(["For "+ str(a) +" use code "+ b for a,b in zip(state_us,code_us)])
-    chat_id = update.message.chat_id
-    context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
-    context.bot.send_message(chat_id=chat_id, text="There are *"+stateCount+"* States in USA. Below are the names and their codes\n\n\n*"+StateName_StateCode+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    var = ' '.join(context.args)
+    print(var)
+    if var == "":
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.message.chat_id, text="Add a Letter to list the US state names , Ex: '/ListUSAStates N",parse_mode=telegram.ParseMode.MARKDOWN)
+    elif (var.isdigit()):
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.message.chat_id, text="Add a Letter to list the US state names , Ex: '/ListUSAStates N",parse_mode=telegram.ParseMode.MARKDOWN)
+    elif(regex.search(var)) == None:
+        letter = var.capitalize()
+        print(letter)
+        state_us = []
+        code_us = []
+        stateCount = str(len(jstates))
+        for each in jstates:   
+            US_state_name = str(each["name"]) 
+            if US_state_name.startswith(letter):
+                state_us.append(each["name"])
+                code_us.append(each["state"])
+
+        StateName_StateCode = ' \n'.join(["For "+ str(a) +" use code "+ b for a,b in zip(state_us,code_us)])
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.message.chat_id, text="There are *"+stateCount+"* States in USA. Below are the names starting with letter *"+letter+"* and their codes\n\n\n*"+StateName_StateCode+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    else:
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.message.chat_id, text="Add a Letter to list the US state names , Ex: '/ListUSAStates N",parse_mode=telegram.ParseMode.MARKDOWN)
     logger.info("US State code handler used ", update.message.chat.id, update.message.from_user.first_name)   
     captureID(update)
 
@@ -808,9 +823,8 @@ def main():
     dp.add_handler(CommandHandler('official_TC',officialTelegramChannels))
     dp.add_handler(CommandHandler('topD',topD))
     dp.add_handler(CommandHandler('topC',topC))
-    dp.add_handler(MessageHandler(Filters.location,getLocation))
     dp.add_handler(CommandHandler('districtwise',districtwise))
-    dp.add_handler(CommandHandler('ListUSAStateCodes',us_statewise))
+    dp.add_handler(CommandHandler('ListUSAStates',us_statewise))
     dp.add_handler(CommandHandler('USAState',usa_state))
     dp.add_handler(CommandHandler('asia',asia))
     dp.add_handler(CommandHandler('africa',africa))
@@ -819,6 +833,7 @@ def main():
     dp.add_handler(CommandHandler('southamerica',southamerica))
     dp.add_handler(CommandHandler('australia',australia))
     dp.add_handler(MessageHandler(Filters.text, handle_message))
+    dp.add_handler(MessageHandler(Filters.location,getLocation))
     updater.start_polling()
     updater.idle()
 
