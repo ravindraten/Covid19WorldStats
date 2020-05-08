@@ -17,62 +17,67 @@ logger = logging.getLogger(__name__)
 today = date.today()
 regex = re.compile('[@_!#$%^&*()<>?/\|}{~:]')
 
-r = requests.get('https://api.covid19india.org/data.json')
-j = r.json()
 
-r = requests.get('https://api.covid19india.org/v2/state_district_wise.json')
-dist_data = r.json()
+def apiRequestsIndia():
+    r = requests.get('https://api.covid19india.org/data.json')
+    j = r.json()
+    r = requests.get('https://api.covid19india.org/v2/state_district_wise.json')
+    dist_data = r.json()
 
-rCountry = requests.get('http://corona-api.com/countries')
-jCountry = rCountry.json()
+    return j,dist_data
 
-contents = requests.get("https://api.covid19api.com/summary").json()
-totalContent = requests.get("https://api.covid19api.com/world/total").json()
+def apiRequestsWorld():
+    rCountry = requests.get('http://corona-api.com/countries')
+    jCountry = rCountry.json()
 
-continent = requests.get('https://corona.lmao.ninja/v2/continents?yesterday=true&sort')
-continent_v = continent.json()
+    totalContent = requests.get("https://thevirustracker.com/free-api?global=stats").json()
 
-rUS = requests.get('https://covidtracking.com/api/states/info')
-jstates = rUS.json()
+    return jCountry,totalContent
 
-rUS_states = requests.get('https://covidtracking.com/api/states')
-states_us = rUS_states.json()
+def apiRequestUSA():
+    rUS = requests.get('https://covidtracking.com/api/states/info')
+    jstates = rUS.json()
 
-us_county = requests.get('https://corona.lmao.ninja/v2/jhucsse/counties')
-county_us = us_county.json()
+    rUS_states = requests.get('https://covidtracking.com/api/states')
+    states_us = rUS_states.json()
+
+    us_county = requests.get('https://corona.lmao.ninja/v2/jhucsse/counties')
+    county_us = us_county.json()
+
+    return jstates,states_us,county_us
 
 APIKey_LQ = ""
 API_key_M = ""
 
 def get_count_world():
-    
-    ijson = contents["Global"]
-    TotalConfirmed = str(totalContent["TotalConfirmed"])
-    NewConfirmed = str(ijson["NewConfirmed"])
-    NewDeaths = str(ijson["NewDeaths"])
-    TotalDeaths = str(totalContent["TotalDeaths"])
-    TotalRecovered = str(totalContent["TotalRecovered"])
-    NewRecovered = str(ijson["NewRecovered"])
-    return TotalConfirmed,NewConfirmed,NewDeaths,TotalDeaths,TotalRecovered,NewRecovered
+    jsonContent = apiRequestsWorld()
+    for each in jsonContent[1]["results"]:
+        TotalConfirmed = str(each["total_cases"])
+        NewConfirmed = str(each["total_new_cases_today"])
+        NewDeaths = str(each["total_new_deaths_today"])
+        TotalDeaths = str(each["total_deaths"])
+        TotalRecovered = str(each["total_recovered"])
+    return TotalConfirmed,NewConfirmed,NewDeaths,TotalDeaths,TotalRecovered
 
 def world(update, context):
     content = get_count_world()
     print (content)
+    updatedTime = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
     chat_id = update.message.chat_id
     context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
-    context.bot.send_message(chat_id=chat_id, text="The total number of *infected* people in the world are: *"+content[0]+"* \
-    \nThe number of *new confirmed* cases people in the world are: *"+content[1]+"* \
-    \nThe number of *new deaths* in the world are: *"+content[2]+"* \
+    context.bot.send_message(chat_id=chat_id, text="The total number of *confirmed* cases in the world are: *"+content[0]+"* \
+    \nThe number of *new confirmed* cases in the world are: *"+content[1]+"* \
+    \nThe number of *new death* cases in the world are: *"+content[2]+"* \
     \nThe *total* number of *dead* people in the world are: *"+content[3]+"*\
-    \nThe number of people who have *recovered* in the world are: *"+content[4]+"* \
-    \nThe number of *newly recovered* people in the world are: *"+content[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    \nThe number of people who have *recovered* in the world are: *"+content[4]+"*\
+    \nThis data was last updated at *"+str(updatedTime)+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     print("This User checked world :"+update.message.from_user.first_name)
     logger.info("World handler used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
     
 def new_count_India():
-
-    for each in j["statewise"]:
+    jsonContent = apiRequestsIndia()
+    for each in jsonContent[0]["statewise"]:
         if str(each["state"]) == "Total":
            confirmed = str(each["confirmed"]) 
            deaths = str(each["deaths"]) 
@@ -95,8 +100,8 @@ def india(update, context):
     captureID(update)
 
 def state_new_count_India(var):
-
-    for each in j["statewise"]:
+    jsonContent = apiRequestsIndia()
+    for each in jsonContent[0]["statewise"]:
         if str(each["statecode"]) == var:
            confirmed = str(each["confirmed"]) 
            deaths = str(each["deaths"]) 
@@ -130,9 +135,10 @@ def indianstate(update, context):
     print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
 
 def indian_state_code(update, context):
+    jsonContent = apiRequestsIndia()
     state = []
     code = []
-    for each in j['statewise']:    
+    for each in jsonContent[0]['statewise']:    
         state.append(each["state"])
         code.append(each["statecode"])
     
@@ -161,9 +167,10 @@ def country_code(update, context):
             if countryName.startswith(letter):
                 countryCode = str(each["code"])
         """
+        jsonContent = apiRequestsWorld()
         country = []
         country_code = []
-        for each in jCountry['data']:
+        for each in jsonContent[0]['data']:
             countryName = str(each["name"])
             if countryName.startswith(letter):
                 country.append(each["name"])
@@ -180,7 +187,8 @@ def country_code(update, context):
 
 def countryWiseStatsCollect(var):
     print(str(var).upper())
-    for each in jCountry["data"]:
+    jsonContent = apiRequestsWorld()
+    for each in jsonContent[0]["data"]:
         if str(each["code"]) == str(var).upper():
             confirmed = str(each["latest_data"]["confirmed"])
             deaths = str(each["latest_data"]["deaths"]) 
@@ -234,7 +242,8 @@ def topC(update, context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.message.chat_id, text="Add a number below 50 with the handler to get results, Ex: '/topD 10",parse_mode=telegram.ParseMode.MARKDOWN)
     elif(regex.search(var)) == None:
-        for each in jCountry["data"]:
+        jsonContent = apiRequestsWorld()
+        for each in jsonContent[0]["data"]:
             confirmed.append(each["latest_data"]["confirmed"])
             country.append(str(each["name"]))
             country_code.append(str(each["code"]))
@@ -246,7 +255,7 @@ def topC(update, context):
         #print(top)
         j=0
         for i in top:
-            for each in jCountry["data"]:
+            for each in jsonContent[0]["data"]:
                 confirmedN = each["latest_data"]["confirmed"]
                 if (i == confirmedN):
                     confirmedcountry.append(str(each["latest_data"]["confirmed"]))
@@ -272,6 +281,7 @@ def topD(update, context):
     deaths = []
     countryN = []
     deathCountry = []
+    jsonContent = apiRequestsWorld()
     if var == "":
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.message.chat_id, text="Add a number after the handler to get the results, Ex: '/topD 10",parse_mode=telegram.ParseMode.MARKDOWN)
@@ -282,7 +292,7 @@ def topD(update, context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.message.chat_id, text="Add a number below 50 with the handler to get results, Ex: '/topD 10",parse_mode=telegram.ParseMode.MARKDOWN)
     elif(regex.search(var)) == None:
-        for each in jCountry["data"]:
+        for each in jsonContent[0]["data"]:
             country.append(str(each["name"]))
             deaths.append(each["latest_data"]["deaths"])
         #print(confirmed)
@@ -292,7 +302,7 @@ def topD(update, context):
         #print(top)
         j=0
         for i in top:
-            for each in jCountry["data"]:
+            for each in jsonContent[0]["data"]:
                 deathN = each["latest_data"]["deaths"]
                 if (i == deathN):
                     deathCountry.append(str(each["latest_data"]["deaths"]))
@@ -451,13 +461,14 @@ def getLocation(update,context):
     current_lon = str(message.location.longitude)
     print(current_lat)
     print(current_lon)
-    
+    jsonContent = apiRequestsIndia()
+    jsonContentUS = apiRequestUSA()
     contents = requests.get("https://locationiq.com/v1/reverse.php?key="+APIKey_LQ+"&lat="+current_lat+"&lon="+current_lon+"&format=json").json()
     countryName = contents["address"]["country"]
     country = contents["address"]["country_code"]
     if country == "in":
         state = contents["address"]["state"]
-        for each in j["statewise"]:
+        for each in jsonContent[0]["statewise"]:
             if str(each["state"]) == state:
                 confirmed = str(each["confirmed"]) 
                 deaths = str(each["deaths"]) 
@@ -477,7 +488,7 @@ def getLocation(update,context):
     elif country == "us":
         state = contents["address"]["state"]
         print(state)
-        for each in jstates:
+        for each in jsonContentUS[0]:
             if str(each["name"]) == state:
                 value = us_statewise_stats(str(each["state"]))
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
@@ -517,8 +528,9 @@ def ask_state_for_districtwise_msg():
 def get_district_msg(state_name):
     #dist_data = get_data('data_district.json')
     #print(dist_data)
+    jsonContent = apiRequestsIndia()
     state_data = []
-    for s in dist_data:
+    for s in jsonContent[1]:
         if s['statecode'].lower() == state_name.lower().strip():
             state_name = s['state']
             state_data = s['districtData']
@@ -559,7 +571,8 @@ def get_msg_d(district):
     return msg_d
 
 def get_lastupdated_msg():
-    msg_lastupdated = j['statewise'][0]['lastupdatedtime']
+    jsonContent = apiRequestsIndia()
+    msg_lastupdated = jsonContent[0]['statewise'][0]['lastupdatedtime']
     print (msg_lastupdated)
     return msg_lastupdated
 
@@ -643,6 +656,7 @@ def getLocation1(update, context, var, var1, time_u):
 def us_statewise(update, context):
     var = ' '.join(context.args)
     print(var)
+    jsonContent = apiRequestUSA()
     if var == "":
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.message.chat_id, text="Add a Letter to list the US state names , Ex: '/ListUSAStates N",parse_mode=telegram.ParseMode.MARKDOWN)
@@ -654,8 +668,8 @@ def us_statewise(update, context):
         print(letter)
         state_us = []
         code_us = []
-        stateCount = str(len(jstates))
-        for each in jstates:   
+        stateCount = str(len(jsonContent[0]))
+        for each in jsonContent[0]:   
             US_state_name = str(each["name"]) 
             if US_state_name.startswith(letter):
                 state_us.append(each["name"])
@@ -671,8 +685,8 @@ def us_statewise(update, context):
     captureID(update)
 
 def us_statewise_stats(var):
-    
-    for each in states_us:
+    jsonContent = apiRequestUSA()
+    for each in jsonContent[1]:
         if str(each["state"]) == var:
            confirmed = str(each["positive"]) 
            deaths = str(each["death"]) 
@@ -681,7 +695,8 @@ def us_statewise_stats(var):
     return confirmed,deaths,recovered,lastupdatedtime
 
 def getUS_stateName(var):
-    for each in jstates:
+    jsonContent = apiRequestUSA()
+    for each in jsonContent[0]:
         if str(each["state"]) == var:   
             state_name1 = str(each["name"])
     return state_name1
@@ -713,12 +728,12 @@ def usa_state(update, context):
 def getLocation2(update, context, var, var1):
     current_lat = var
     current_lon = var1
-    
+    jsonContent = apiRequestUSA()
     contents = requests.get("https://locationiq.com/v1/reverse.php?key="+APIKey_LQ+"&lat="+current_lat+"&lon="+current_lon+"&format=json").json()
     county = contents["address"]["county"]
     #countyName = county.split(' ',1)[0]
     countyName = str((county.replace("County","")).strip())
-    for each in county_us:
+    for each in jsonContent[2]:
         if str(each["county"]) == countyName:
             confirmed = str(each["stats"]["confirmed"]) 
             deaths = str(each["stats"]["deaths"]) 
@@ -738,6 +753,8 @@ def getLocation2(update, context, var, var1):
     captureID(update)
 
 def continent_count(var):
+    continent = requests.get('https://corona.lmao.ninja/v2/continents?yesterday=true&sort')
+    continent_v = continent.json()
     for each in continent_v:
         if str(each["continent"]) == var:
            confirmed = str(each["cases"]) 
