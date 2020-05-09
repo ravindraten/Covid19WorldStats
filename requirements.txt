@@ -2,3 +2,4 @@ python-telegram-bot
 pylint
 geocoder
 requests
+pyshorteners

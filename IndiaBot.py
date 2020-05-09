@@ -51,6 +51,11 @@ def apiRequestGermany():
     statejson = germany.json()
     return statejson
 
+def apiRequestJapan():
+    japan = requests.get("https://data.covid19japan.com/summary/latest.json")
+    japanProvince = japan.json()
+    return japanProvince
+
 APIKey_LQ = ""
 API_key_M = ""
 
@@ -471,6 +476,7 @@ def getLocation(update,context):
     contents = requests.get("https://locationiq.com/v1/reverse.php?key="+APIKey_LQ+"&lat="+current_lat+"&lon="+current_lon+"&format=json").json()
     countryName = contents["address"]["country"]
     country = contents["address"]["country_code"]
+    state_jp = contents["address"]["state"]
     if country == "in":
         state = contents["address"]["state"]
         for each in jsonContent[0]["statewise"]:
@@ -515,6 +521,18 @@ def getLocation(update,context):
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocation3(update,context,current_lat,current_lon)
+        links(context,update,current_lat,current_lon)
+    elif country == "jp":
+        prefecture = str((state_jp.replace("Prefecture","")).strip())
+        content_k = countryWiseStatsCollect(country)
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
+        \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
+        \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
+        \nThe *population* as of today in this country are: *"+content_k[3]+"*\
+        \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        getLocationJP(update,context,prefecture)
         links(context,update,current_lat,current_lon)
     else :#country = url['country_code']
         content_k = countryWiseStatsCollect(country)
@@ -887,6 +905,28 @@ def getLocation3(update, context, var, var1):
         context.bot.send_message(chat_id=update.effective_chat.id, text="The data for state *"+G_stateName+"* is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
 
     logger.info("location for county handler used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
+def getLocationJP(update, context, prefecture):
+    state_japan = prefecture
+    jsonContent = apiRequestJapan()
+    for each in jsonContent['prefectures']:    
+        if str(each["name"]) == state_japan:
+            confirmed = str(each["confirmed"]) 
+            deaths = str(each["deceased"]) 
+            newcases = str(each["newlyConfirmed"])
+            recovered = str(each["recovered"])
+    print(state_japan)
+    try:
+        context.bot.send_message(chat_id=update.message.chat_id,text="You are currently located in or the Map location shared is in prefecture *"+state_japan+"*\
+        \nThe number of *confirmed* cases in this state are: *"+confirmed+"*\
+        \nThe number of *deaths* are: *"+deaths+"*\
+        \nThe number of *newcases* are: *"+newcases+"*\
+        \nThe number of *recovered* cases are: *"+recovered+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The data for state *"+state_japan+"* is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
+
+    logger.info("location for county handler JP used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
 
 def germanToEnglish(update,context,var,var1):
