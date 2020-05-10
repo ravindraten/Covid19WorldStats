@@ -61,6 +61,11 @@ def apiRequestUK():
     uk_ltla = uk.json()
     return uk_ltla
 
+def apiRequestNL():
+    nl = requests.get("https://opendata.arcgis.com/datasets/620c2ab925f64ed5979d251ba7753b7f_0.geojson")
+    nl_city = nl.json()
+    return nl_city
+
 APIKey_LQ = ""
 API_key_M = ""
 
@@ -535,7 +540,7 @@ def getLocation(update,context):
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocation3(update,context,current_lat,current_lon)
-        links(context,update,current_lat,current_lon)
+        #links(context,update,current_lat,current_lon)
     elif country == "jp":
         prefecture = str((state_jp.replace("Prefecture","")).strip())
         content_k = countryWiseStatsCollect(country)
@@ -547,7 +552,7 @@ def getLocation(update,context):
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocationJP(update,context,prefecture)
-        links(context,update,current_lat,current_lon)
+        #links(context,update,current_lat,current_lon)
     elif country == "gb":
         regionUK = contents["address"]["state_district"]
         content_k = countryWiseStatsCollect(country)
@@ -559,7 +564,24 @@ def getLocation(update,context):
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocationUK(update,context,regionUK)
-        links(context,update,current_lat,current_lon)
+        #links(context,update,current_lat,current_lon)
+    elif country == "nl":
+        content_k = countryWiseStatsCollect(country)
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
+        \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
+        \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
+        \nThe *population* as of today in this country are: *"+content_k[3]+"*\
+        \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        #links(context,update,current_lat,current_lon)
+        try:
+            cityNL = contents["address"]["city"]
+        except:
+            cityNL = contents["address"]["town"]
+        getLocationNL(update,context,cityNL)
+        print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
+    
     else :#country = url['country_code']
         content_k = countryWiseStatsCollect(country)
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
@@ -974,6 +996,29 @@ def getLocationUK(update, context, regionUK):
         \nThe number of *confirmed* cases in this region are: *"+confirmed+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     except:
         context.bot.send_message(chat_id=update.effective_chat.id, text="The data for region *"+region+"* is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
+
+    logger.info("location for county handler JP used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
+def getLocationNL(update, context, cityNL):
+    cityNew = cityNL
+    if cityNew == "The Hague":
+        cityNew = "'s-Gravenhage"
+    jsonContent = apiRequestNL()
+    print(cityNew)
+    for each in jsonContent["features"]:    
+        if str(each['properties']["Gemeentenaam"]) == cityNew:
+            confirmed = str(each['properties']["Meldingen"])
+            deaths = str(each['properties']["Overleden"])
+            province = str(each['properties']["Provincie"])
+            break
+    print(str(each['properties']["Provincie"]))
+    try:
+        context.bot.send_message(chat_id=update.message.chat_id,text="You are currently located in or the Map location shared is in region *"+cityNew+"* and is from Province *"+province+"*\
+        \nThe number of *confirmed* cases in this city are: *"+confirmed+"*\
+        \nThe number of *deaths* in this city are: *"+deaths+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The data for city *"+cityNew+"* is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
 
     logger.info("location for county handler JP used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
