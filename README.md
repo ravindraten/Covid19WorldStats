@@ -16,6 +16,7 @@ I am using Google Cloud Platform instance to host the bot.
 - http://corona-api.com/countries
 - https://covidtracking.com
 - https://data.covid19japan.com/summary/latest.json
+- https://xn--80aesfpebagmfblc0a.xn--p1ai/information/
 
 ### To get Geo location I am using: 
 
