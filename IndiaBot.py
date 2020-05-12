@@ -9,6 +9,7 @@ from functools import wraps
 import numbers
 import geocoder
 import pyshorteners
+from russia import region
 from pyshorteners import Shorteners
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -65,6 +66,11 @@ def apiRequestNL():
     nl = requests.get("https://opendata.arcgis.com/datasets/620c2ab925f64ed5979d251ba7753b7f_0.geojson")
     nl_city = nl.json()
     return nl_city
+
+def apiRequestRU(code):
+    ru = requests.get("https://xn--80aesfpebagmfblc0a.xn--p1ai/covid_data.json?do=region_stats&code="+code)
+    ru_state = ru.json()
+    return ru_state
 
 APIKey_LQ = ""
 API_key_M = ""
@@ -486,7 +492,6 @@ def getLocation(update,context):
     contents = requests.get("https://locationiq.com/v1/reverse.php?key="+APIKey_LQ+"&lat="+current_lat+"&lon="+current_lon+"&format=json").json()
     countryName = contents["address"]["country"]
     country = contents["address"]["country_code"]
-    state_jp = contents["address"]["state"]
     
     if country == "in":
         state = contents["address"]["state"]
@@ -542,6 +547,7 @@ def getLocation(update,context):
         getLocation3(update,context,current_lat,current_lon)
         #links(context,update,current_lat,current_lon)
     elif country == "jp":
+        state_jp = contents["address"]["state"]
         prefecture = str((state_jp.replace("Prefecture","")).strip())
         content_k = countryWiseStatsCollect(country)
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
@@ -581,6 +587,21 @@ def getLocation(update,context):
             cityNL = contents["address"]["town"]
         getLocationNL(update,context,cityNL)
         print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
+    elif country == "ru":
+        stateRU = contents["address"]["state"]
+        print(stateRU)
+        content_k = countryWiseStatsCollect(country)
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
+        \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
+        \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
+        \nThe *population* as of today in this country are: *"+content_k[3]+"*\
+        \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        
+        print(stateRU)
+        getLocationRU(update,context,stateRU)
+        print("This User checked this"+ content_k[5] +":"+update.message.from_user.first_name)
     
     else :#country = url['country_code']
         content_k = countryWiseStatsCollect(country)
@@ -1021,6 +1042,29 @@ def getLocationNL(update, context, cityNL):
         context.bot.send_message(chat_id=update.effective_chat.id, text="The data for city *"+cityNew+"* is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
 
     logger.info("location for county handler JP used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
+def getLocationRU(update, context, stateRU):
+    state = stateRU
+    try:
+        c = region(state)
+        print(c[0])
+        jsonContent = apiRequestRU(c[0])
+        for each in jsonContent:    
+            confirmed = str(each['sick'])
+            recovered = str(each['healed'])
+            deaths = str(each['died'])
+            date = str(each["date"])
+            break
+        context.bot.send_message(chat_id=update.message.chat_id,text="You are currently located in or the Map location shared is in region *"+c[1]+"*\
+        \nThe number of *confirmed* cases in this place are: *"+confirmed+"*\
+        \nThe number of *deaths* in this place are: *"+deaths+"*\
+        \nThe number of *recovered* cases in this place are: *"+recovered+"*\
+        \nThis data was last updated on *"+date+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The data for region *"+state+"* is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
+
+    logger.info("location for county handler RU used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
 
 def germanToEnglish(update,context,var,var1):
