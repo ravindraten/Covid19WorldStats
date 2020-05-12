@@ -20,6 +20,7 @@ I am using Google Cloud Platform instance to host the bot.
 - https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_latest.json
 - https://opendata.arcgis.com/datasets/620c2ab925f64ed5979d251ba7753b7f_0.geojson
 - https://xn--80aesfpebagmfblc0a.xn--p1ai/information/
+- https://covid19-esriau.hub.arcgis.com/
 
 ### To get Geo location I am using: 
 
