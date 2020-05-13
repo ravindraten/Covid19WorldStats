@@ -3,7 +3,7 @@ import telegram
 import requests
 import re
 import json
-from datetime import date,datetime
+from datetime import date,datetime,timedelta
 import logging
 from functools import wraps
 import numbers
@@ -76,6 +76,11 @@ def apiRequestAUS():
     aus = requests.get("https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE.json")
     aus_state = aus.json()
     return aus_state
+
+def apiRequestCAN():
+    can = requests.get("https://opendata.arcgis.com/datasets/3afa9ce11b8842cb889714611e6f3076_0.geojson")
+    can_province = can.json()
+    return can_province
 
 APIKey_LQ = ""
 API_key_M = ""
@@ -620,6 +625,20 @@ def getLocation(update,context):
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocationAUS(update,context,stateAUS)
         print("This User checked this"+ content_k[5] +":"+update.message.from_user.first_name)
+    elif country == "ca":
+        provinceCA = str(contents["address"]["state"]).upper()
+        print(provinceCA)
+        content_k = countryWiseStatsCollect(country)
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
+        \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
+        \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
+        \nThe *population* as of today in this country are: *"+content_k[3]+"*\
+        \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        #links(context,update,current_lat,current_lon)
+        getLocationCA(update,context,provinceCA)
+        print("This User checked Now"+ content_k[5] +":"+update.message.from_user.first_name)
     else :#country = url['country_code']
         content_k = countryWiseStatsCollect(country)
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
@@ -1104,6 +1123,40 @@ def getLocationAUS(update, context, stateAUS):
         context.bot.send_message(chat_id=update.effective_chat.id, text="The data for region *"+stateau+"* is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
 
     logger.info("location for county handler AUS used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
+def getLocationCA(update, context, provinceCA):
+    provinceNew = provinceCA
+    jsonContent = apiRequestCAN()
+    print(provinceNew)
+    today = datetime.today()
+    yesterday = today - timedelta(days = 1)
+    yday = yesterday.strftime('%Y/%m/%d')
+    tday = today.strftime('%Y/%m/%d')
+    print(tday)
+    print(yday)
+    for each in jsonContent["features"]:    
+        if str(each['properties']["Province"]) == provinceNew:
+            val = str(each['properties']["SummaryDate"]).split()
+            if(str(val[0].strip()) == tday) or (str(val[0].strip()) == yday):
+                confirmed = str(each['properties']["TotalCases"])
+                deaths = str(each['properties']["TotalDeaths"])
+                province = str(each['properties']["Province"])
+                recovered = str(each["properties"]["TotalRecovered"])
+                newCases = str(each["properties"]["DailyTotals"])
+                print(str(each['properties']["Province"]))
+                break
+    try:
+        context.bot.send_message(chat_id=update.message.chat_id,text="You are currently located in or the Map location shared is in province *"+province+"*\
+        \nThe number of *confirmed* cases in this province are: *"+confirmed+"*\
+        \nThe number of *newcases* in this province are: *"+newCases+"*\
+        \nThe number of *deaths* in this province are: *"+deaths+"*\
+        \nThe number os *recovered* cases in this province are: *"+recovered+"*\
+        \nThe data was last updated at *"+val[0]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The data for province is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
+
+    logger.info("location for county handler CA used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
 
 def germanToEnglish(update,context,var,var1):
