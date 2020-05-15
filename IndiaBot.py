@@ -2,7 +2,7 @@ from telegram.ext import (Updater, InlineQueryHandler, CommandHandler, CallbackC
 import telegram
 import requests
 import re
-import json
+import json 
 from datetime import date,datetime,timedelta
 import logging
 from functools import wraps
@@ -10,6 +10,7 @@ import numbers
 import geocoder
 import pyshorteners
 from russia import region
+from spain import regionES
 from pyshorteners import Shorteners
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -31,9 +32,7 @@ def apiRequestsWorld():
     rCountry = requests.get('http://corona-api.com/countries')
     jCountry = rCountry.json()
 
-    totalContent = requests.get("https://thevirustracker.com/free-api?global=stats").json()
-
-    return jCountry,totalContent
+    return jCountry#,totalContent
 
 def apiRequestUSA():
     rUS = requests.get('https://covidtracking.com/api/states/info')
@@ -51,6 +50,10 @@ def apiRequestGermany():
     germany = requests.get("https://rki-covid-api.now.sh/api/states")
     statejson = germany.json()
     return statejson
+    
+def apiWorldNew():
+    world = requests.get("https://corona.lmao.ninja/v2/all").json()
+    return world
 
 def apiRequestJapan():
     japan = requests.get("https://data.covid19japan.com/summary/latest.json")
@@ -82,31 +85,40 @@ def apiRequestCAN():
     can_province = can.json()
     return can_province
 
+def apiRequestES(dateToday):
+    spain = requests.get("https://api.covid19tracking.narrativa.com/api/"+dateToday+"/country/spain/region/all")
+    es_province = spain.json()
+    return es_province
+
 APIKey_LQ = ""
 API_key_M = ""
 
 def get_count_world():
-    jsonContent = apiRequestsWorld()
-    for each in jsonContent[1]["results"]:
-        TotalConfirmed = str(each["total_cases"])
-        NewConfirmed = str(each["total_new_cases_today"])
-        NewDeaths = str(each["total_new_deaths_today"])
-        TotalDeaths = str(each["total_deaths"])
-        TotalRecovered = str(each["total_recovered"])
-    return TotalConfirmed,NewConfirmed,NewDeaths,TotalDeaths,TotalRecovered
+    jsonContent = apiWorldNew()
+    TotalConfirmed = str(jsonContent["cases"])
+    NewConfirmed = str(jsonContent["todayCases"])
+    NewDeaths = str(jsonContent["todayDeaths"])
+    TotalDeaths = str(jsonContent["deaths"])
+    TotalRecovered = str(jsonContent["recovered"])
+    affectedCountries = str(jsonContent["affectedCountries"])
+    return TotalConfirmed,NewConfirmed,NewDeaths,TotalDeaths,TotalRecovered,affectedCountries
 
 def world(update, context):
     content = get_count_world()
     print (content)
-    updatedTime = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
-    chat_id = update.message.chat_id
-    context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
-    context.bot.send_message(chat_id=chat_id, text="The total number of *confirmed* cases in the world are: *"+content[0]+"* \
-    \nThe number of *new confirmed* cases in the world are: *"+content[1]+"* \
-    \nThe number of *new death* cases in the world are: *"+content[2]+"* \
-    \nThe *total* number of *dead* people in the world are: *"+content[3]+"*\
-    \nThe number of people who have *recovered* in the world are: *"+content[4]+"*\
-    \nThis data was last updated at *"+str(updatedTime)+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    if content[0] == "0":
+        context.bot.send_message(chat_id=update.message.chat_id, text="The API is giving incorrect data")
+    else:
+        updatedTime = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        chat_id = update.message.chat_id
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=chat_id, text="The total number of *confirmed* cases in the world are: *"+content[0]+"* \
+        \nThe number of *new confirmed* cases in the world are: *"+content[1]+"* \
+        \nThe number of *new death* cases in the world are: *"+content[2]+"* \
+        \nThe *total* number of *dead* people in the world are: *"+content[3]+"*\
+        \nThe number of people who have *recovered* in the world are: *"+content[4]+"*\
+        \nThe total affected countries are : *"+content[5]+"*\
+        \nThis data was last updated at *"+str(updatedTime)+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     print("This User checked world :"+update.message.from_user.first_name)
     logger.info("World handler used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
@@ -127,9 +139,9 @@ def india(update, context):
     chat_id = update.message.chat_id
     context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     context.bot.send_message(chat_id=chat_id, text="The number of *confirmed* cases in *India* are: *"+content[0]+"*\
+    \n The number of *newcases* as of today are: *"+content[3]+"*\
     \n The number of *deaths* are: *"+content[1]+"*\
     \n The number of *recovered* people are: *"+content[2]+"*\
-    \n The number of *newcases* as of today are: *"+content[3]+"*\
     \n This data was last updated at : *"+content[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     print("This User checked India: "+update.message.from_user.first_name)
     logger.info("India handler used ", update.message.chat.id, update.message.from_user.first_name)
@@ -189,10 +201,10 @@ def country_code(update, context):
     print(var)
     if var == "":
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
-        context.bot.send_message(chat_id=update.message.chat_id, text="Add a Letter to list the countries , Ex: '/countrycode N",parse_mode=telegram.ParseMode.MARKDOWN)
+        context.bot.send_message(chat_id=update.message.chat_id, text="Add a Letter to list the countries , Ex: '/countrycode N'",parse_mode=telegram.ParseMode.MARKDOWN)
     elif (var.isdigit()):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
-        context.bot.send_message(chat_id=update.message.chat_id, text="Add a Letter to list the countries , Ex: '/countrycode N",parse_mode=telegram.ParseMode.MARKDOWN)
+        context.bot.send_message(chat_id=update.message.chat_id, text="Add a Letter to list the countries , Ex: '/countrycode N'",parse_mode=telegram.ParseMode.MARKDOWN)
     elif(regex.search(var)) == None:
         letter = var.capitalize()
         print(letter)
@@ -206,7 +218,7 @@ def country_code(update, context):
         jsonContent = apiRequestsWorld()
         country = []
         country_code = []
-        for each in jsonContent[0]['data']:
+        for each in jsonContent['data']:
             countryName = str(each["name"])
             if countryName.startswith(letter):
                 country.append(each["name"])
@@ -224,7 +236,7 @@ def country_code(update, context):
 def countryWiseStatsCollect(var):
     print(str(var).upper())
     jsonContent = apiRequestsWorld()
-    for each in jsonContent[0]["data"]:
+    for each in jsonContent["data"]:
         if str(each["code"]) == str(var).upper():
             confirmed = str(each["latest_data"]["confirmed"])
             deaths = str(each["latest_data"]["deaths"]) 
@@ -279,7 +291,7 @@ def topC(update, context):
         context.bot.send_message(chat_id=update.message.chat_id, text="Add a number below 50 with the handler to get results, Ex: '/topD 10",parse_mode=telegram.ParseMode.MARKDOWN)
     elif(regex.search(var)) == None:
         jsonContent = apiRequestsWorld()
-        for each in jsonContent[0]["data"]:
+        for each in jsonContent["data"]:
             confirmed.append(each["latest_data"]["confirmed"])
             country.append(str(each["name"]))
             country_code.append(str(each["code"]))
@@ -328,7 +340,7 @@ def topD(update, context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.message.chat_id, text="Add a number below 50 with the handler to get results, Ex: '/topD 10",parse_mode=telegram.ParseMode.MARKDOWN)
     elif(regex.search(var)) == None:
-        for each in jsonContent[0]["data"]:
+        for each in jsonContent["data"]:
             country.append(str(each["name"]))
             deaths.append(each["latest_data"]["deaths"])
         #print(confirmed)
@@ -504,6 +516,7 @@ def getLocation(update,context):
     country = contents["address"]["country_code"]
     
     if country == "in":
+        india(update,context)
         state = contents["address"]["state"]
         for each in jsonContent[0]["statewise"]:
             if str(each["state"]) == state:
@@ -527,6 +540,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
         \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *new cases* in this country are: *"+content_k[6]+"*\
         \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
         \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
@@ -543,6 +557,7 @@ def getLocation(update,context):
         \nThis data was last updated at : *2020/"+value[3]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocation2(update,context,current_lat,current_lon)
         #links(context,update,current_lat,current_lon)
+        captureID(update)
     elif country == "de":
         #state = contents["address"]["state"]
         #print(state)
@@ -550,12 +565,14 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
         \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *new cases* in this country are: *"+content_k[6]+"*\
         \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
         \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocation3(update,context,current_lat,current_lon)
         #links(context,update,current_lat,current_lon)
+        captureID(update)
     elif country == "jp":
         state_jp = contents["address"]["state"]
         prefecture = str((state_jp.replace("Prefecture","")).strip())
@@ -563,29 +580,34 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
         \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *new cases* in this country are: *"+content_k[6]+"*\
         \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
         \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocationJP(update,context,prefecture)
         #links(context,update,current_lat,current_lon)
+        captureID(update)
     elif country == "gb":
         regionUK = contents["address"]["state_district"]
         content_k = countryWiseStatsCollect(country)
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
         \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *new cases* in this country are: *"+content_k[6]+"*\
         \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
         \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocationUK(update,context,regionUK)
         #links(context,update,current_lat,current_lon)
+        captureID(update)
     elif country == "nl":
         content_k = countryWiseStatsCollect(country)
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
         \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *new cases* in this country are: *"+content_k[6]+"*\
         \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
         \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
@@ -597,6 +619,7 @@ def getLocation(update,context):
             cityNL = contents["address"]["town"]
         getLocationNL(update,context,cityNL)
         print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
+        captureID(update)
     elif country == "ru":
         stateRU = contents["address"]["state"]
         print(stateRU)
@@ -604,6 +627,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
         \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *new cases* in this country are: *"+content_k[6]+"*\
         \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
         \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
@@ -612,6 +636,7 @@ def getLocation(update,context):
         print(stateRU)
         getLocationRU(update,context,stateRU)
         print("This User checked this"+ content_k[5] +":"+update.message.from_user.first_name)
+        captureID(update)
     elif country == "au":
         stateAUS = str((contents["address"]["state"]).strip())
         print(stateAUS)
@@ -619,12 +644,14 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
         \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *new cases* in this country are: *"+content_k[6]+"*\
         \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
         \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocationAUS(update,context,stateAUS)
         print("This User checked this"+ content_k[5] +":"+update.message.from_user.first_name)
+        captureID(update)
     elif country == "ca":
         provinceCA = str(contents["address"]["state"]).upper()
         print(provinceCA)
@@ -632,6 +659,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
         \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *new cases* in this country are: *"+content_k[6]+"*\
         \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
         \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
@@ -639,11 +667,29 @@ def getLocation(update,context):
         #links(context,update,current_lat,current_lon)
         getLocationCA(update,context,provinceCA)
         print("This User checked Now"+ content_k[5] +":"+update.message.from_user.first_name)
+        captureID(update)
+    elif country == "es":
+        provinceCA = str(contents["address"]["state"])
+        print(provinceCA)
+        content_k = countryWiseStatsCollect(country)
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
+        \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *new cases* in this country are: *"+content_k[6]+"*\
+        \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
+        \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
+        \nThe *population* as of today in this country are: *"+content_k[3]+"*\
+        \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        #links(context,update,current_lat,current_lon)
+        getLocationES(update,context,provinceCA)
+        print("This User checked Now"+ content_k[5] +":"+update.message.from_user.first_name)
+        captureID(update)
     else :#country = url['country_code']
         content_k = countryWiseStatsCollect(country)
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
         \nThe number of *confirmed* cases in this country are: *"+content_k[0]+"*\
+        \nThe number of *new cases* in this country are: *"+content_k[6]+"*\
         \nThe number of *deaths* in this country are: *"+content_k[1]+"*\
         \nThe number of *recovered* cases in this country are: *"+content_k[2]+"*\
         \nThe *population* as of today in this country are: *"+content_k[3]+"*\
@@ -1157,6 +1203,38 @@ def getLocationCA(update, context, provinceCA):
         context.bot.send_message(chat_id=update.effective_chat.id, text="The data for province is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
 
     logger.info("location for county handler CA used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
+def getLocationES(update, context, provinceCA):
+    
+    provinceNew = regionES(provinceCA)
+    print(provinceNew)
+    today = datetime.today()
+    yesterday = today - timedelta(days = 1)
+    yday = yesterday.strftime('%Y-%m-%d')
+    tday = today.strftime('%Y-%m-%d')
+    jsonContent = apiRequestES(tday)
+    print(tday)
+    print(yday)
+    for each in jsonContent["dates"][tday]["countries"]["Spain"]["regions"]:    
+        if str(each['name']) == provinceNew:
+            confirmed = str(each['today_confirmed'])
+            deaths = str(each["today_deaths"])
+            province = str(each['name'])
+            recovered = str(each["today_recovered"])
+            newCases = str(each["today_new_confirmed"])
+            break
+    try:
+        context.bot.send_message(chat_id=update.message.chat_id,text="You are currently located in or the Map location shared is in province *"+province+"*\
+        \nThe number of *confirmed* cases in this province are: *"+confirmed+"*\
+        \nThe number of *newcases* in this province are: *"+newCases+"*\
+        \nThe number of *deaths* in this province are: *"+deaths+"*\
+        \nThe number os *recovered* cases in this province are: *"+recovered+"*\
+        \nThe data was last updated at **",parse_mode=telegram.ParseMode.MARKDOWN)
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The data for province is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
+
+    logger.info("location for county handler ES used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
 
 def germanToEnglish(update,context,var,var1):

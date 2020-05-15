@@ -12,7 +12,7 @@ I am using Google Cloud Platform instance to host the bot.
 ### API used to collect data are from below:
 
 - https://www.covid19india.org/
-- https://thevirustracker.com/free-api?global=stats
+- https://corona.lmao.ninja/v2/all
 - http://corona-api.com/countries
 - https://covidtracking.com
 - https://data.covid19japan.com/summary/latest.json
@@ -21,6 +21,9 @@ I am using Google Cloud Platform instance to host the bot.
 - https://opendata.arcgis.com/datasets/620c2ab925f64ed5979d251ba7753b7f_0.geojson
 - https://xn--80aesfpebagmfblc0a.xn--p1ai/information/
 - https://covid19-esriau.hub.arcgis.com/
+- https://covid19tracking.narrativa.com/index_en.html
+- https://opendata.arcgis.com/datasets/3afa9ce11b8842cb889714611e6f3076_0.geojson
+- https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE.json
 
 ### To get Geo location I am using: 
 
