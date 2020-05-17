@@ -12,6 +12,7 @@ import pyshorteners
 from russia import region
 from spain import regionES
 from indianDistricts import districtIN
+import pandas as pd
 from pyshorteners import Shorteners
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -84,6 +85,11 @@ def apiRequestCAN():
     can = requests.get("https://opendata.arcgis.com/datasets/3afa9ce11b8842cb889714611e6f3076_0.geojson")
     can_province = can.json()
     return can_province
+
+def apiRequestBrazil():
+    bra = requests.get("https://covid19-brazil-api.now.sh/api/report/v1")
+    bra_states = bra.json()
+    return bra_states
 
 def apiRequestES(dateToday):
     spain = requests.get("https://api.covid19tracking.narrativa.com/api/"+dateToday+"/country/spain/region/all")
@@ -705,6 +711,21 @@ def getLocation(update,context):
         getLocationES(update,context,provinceCA)
         print("This User checked Now"+ content_k[5] +":"+update.message.from_user.first_name)
         captureID(update)
+    elif country == "br":
+        state_br = contents["address"]["state"]
+        print(state_br)
+        content_k = countryWiseStatsCollect(country)
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
+        \n\
+        \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
+        \nDeath Cases          : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
+        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nCurrent Population : *"+content_k[3]+"*\
+        \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        getLocationBR(update,context,state_br)
+        #links(context,update,current_lat,current_lon)
+        captureID(update)
     else :#country = url['country_code']
         content_k = countryWiseStatsCollect(country)
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
@@ -745,11 +766,11 @@ def get_district_msg(state_name):
     districtwise_msg = "No data found for State {state_name}".format(state_name=state_name)
     if state_data != []:
         state_data = sorted(state_data, key = lambda i: i['confirmed'],reverse=True)
-        districtwise_msg = "District-wise confirmed cases, new cases, recovered cases and death cases till now in <b>{state_name}</b>\n\n ".format(state_name=state_name)
+        districtwise_msg = "District-wise Covid-19 stats till now in <b>{state_name}</b>\n".format(state_name=state_name)
         for district in state_data:
-            formatted_district_data = "\n<b>{district_name}</b>\nActive Cases:      <b>{active}</b>\nConfirmed Cases:<b>{confirmed:4}{delta_confirmed}</b>\nRecovered cases:<b>{recovered}{delta_recovered}</b>\nDeaths:                <b>{death}{delta_death}</b>\n".format(confirmed=district['confirmed'], delta_confirmed=get_delta_msg(district), district_name= district['district'], recovered=get_msg_r(district),delta_recovered=get_delta_r(district), death=get_msg_d(district),delta_death=get_delta_d(district),active=get_msg_a(district))
+            formatted_district_data = "\n<b>{district_name}</b>\nActive:{active}\nConfirmed:{confirmed:4}{delta_confirmed}\nRecovered:{recovered}{delta_recovered}\nDeaths:{death}{delta_death}\n".format(confirmed=district['confirmed'], delta_confirmed=get_delta_msg(district), district_name= district['district'], recovered=get_msg_r(district),delta_recovered=get_delta_r(district), death=get_msg_d(district),delta_death=get_delta_d(district),active=get_msg_a(district))
             districtwise_msg += formatted_district_data
-        districtwise_msg += "\n\n Data last updated at " + get_lastupdated_msg()
+        districtwise_msg += "\nData last updated at " + get_lastupdated_msg()
     return districtwise_msg
 
 def get_delta_msg(district):
@@ -1280,6 +1301,31 @@ def getLocationES(update, context, provinceCA):
     logger.info("location for county handler ES used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
 
+def getLocationBR(update, context, stateBR):
+    state_BR = stateBR
+    jsonContent = apiRequestBrazil()
+    if state_BR=="Federal District":
+        state_BR = "Distrito Federal"
+    for each in jsonContent['data']:    
+        if str(each["state"]) == state_BR:
+            confirmed = str(each["cases"]) 
+            deaths = str(each["deaths"])
+            updatedTime = str(each["datetime"])
+            break
+    d1 = datetime.strptime(updatedTime,"%Y-%m-%dT%H:%M:%S.%fZ")
+    uT = d1.strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        context.bot.send_message(chat_id=update.message.chat_id,text="The location you shared is in state *"+state_BR+"*\
+        \n\
+        \nConfirmed Cases  : *"+confirmed+"*\
+        \nDeath Cases          : *"+deaths+"*\
+        \nThe data was last updated at *"+uT+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The data for state *"+state_BR+"* is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
+
+    logger.info("location for county handler BR used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
 def germanToEnglish(update,context,var,var1):
     current_lat = var
     current_lon = var1
@@ -1315,8 +1361,20 @@ def germanToEnglish(update,context,var,var1):
 
     return state
 
+def healthCheck(update,context):
+    df= pd.read_csv('api.csv')
+    
+    for url in df['urls']:
+        response= requests.get(url)
+        status= response.status_code
+        if status != 200:
+            context.bot.send_message(chat_id=update.effective_chat.id, text="API down for "+url,parse_mode=telegram.ParseMode.MARKDOWN)
+        else :
+            context.bot.send_message(chat_id=update.effective_chat.id, text="API is Up and running",parse_mode=telegram.ParseMode.MARKDOWN)
+       
 def main():
-    BotToken = "s"
+    
+    BotToken = ""
     updater = Updater(BotToken,use_context=True)
     
     print (today)
@@ -1347,6 +1405,7 @@ def main():
     dp.add_handler(CommandHandler('northamerica',northamerica))
     dp.add_handler(CommandHandler('southamerica',southamerica))
     dp.add_handler(CommandHandler('australia',australia))
+    dp.add_handler(CommandHandler('healthcheck',healthCheck))
     dp.add_handler(MessageHandler(Filters.text, handle_message))
     dp.add_handler(MessageHandler(Filters.location,getLocation))
     updater.start_polling()

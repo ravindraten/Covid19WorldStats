@@ -1,0 +1,17 @@
+urls
+https://api.covid19india.org/data.json
+https://api.covid19india.org/v2/state_district_wise.json
+https://corona.lmao.ninja/v2/countries
+https://covidtracking.com/api/states/info
+https://covidtracking.com/api/states
+https://corona.lmao.ninja/v2/jhucsse/counties
+https://rki-covid-api.now.sh/api/states
+https://corona.lmao.ninja/v2/all
+https://data.covid19japan.com/summary/latest.json
+https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_latest.json
+https://opendata.arcgis.com/datasets/620c2ab925f64ed5979d251ba7753b7f_0.geojson
+https://xn--80aesfpebagmfblc0a.xn--p1ai/covid_data.json?do=region_stats&code=RU-MOS
+https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE.json
+https://opendata.arcgis.com/datasets/3afa9ce11b8842cb889714611e6f3076_0.geojson
+https://covid19-brazil-api.now.sh/api/report/v1
+https://api.covid19tracking.narrativa.com/api/2020-05-17/country/spain/region/all
