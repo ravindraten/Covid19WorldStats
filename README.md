@@ -24,9 +24,11 @@ I am using Google Cloud Platform instance to host the bot.
 - https://covid19tracking.narrativa.com/index_en.html
 - https://opendata.arcgis.com/datasets/3afa9ce11b8842cb889714611e6f3076_0.geojson
 - https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE.json
+- https://disease.sh/v2/gov/Italy
 
 ### To get Geo location I am using: 
 
 - https://locationiq.com
 - http://mapmyindia.com
+- https://api.bigdatacloud.net
 
