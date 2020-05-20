@@ -779,6 +779,28 @@ def getLocation(update,context):
         #links(context,update,current_lat,current_lon)
         getLocationIT(update,context,stateIT)
         print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
+    elif country == "cl" :#country = url['country_code']
+        content_k = countryWiseStatsCollect(country)
+        today = datetime.today()
+        tday = today.strftime('%d.%m.%Y')
+        yesterday = today - timedelta(days = 1)
+        yday = yesterday.strftime('%d.%m.%Y')
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
+        \n\
+        \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
+        \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
+        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nCurrent Population : *"+content_k[3]+"*\
+        \nThis data was last updated at : *"+content_k[4]+"*\
+        \nBelow is the pdf from Minsal from yesterday",parse_mode=telegram.ParseMode.MARKDOWN)
+        try:
+            context.bot.send_document(chat_id=update.effective_chat.id,document="https://cdn.digital.gob.cl/public_files/Campa%C3%B1as/Corona-Virus/Reportes/"+tday+"_Reporte_Covid19.pdf")
+        except:
+            context.bot.send_document(chat_id=update.effective_chat.id,document="https://cdn.digital.gob.cl/public_files/Campa%C3%B1as/Corona-Virus/Reportes/"+yday+"_Reporte_Covid19.pdf")
+        
+        print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
+    
     else :#country = url['country_code']
         print(contents)
         content_k = countryWiseStatsCollect(country)
@@ -1426,7 +1448,6 @@ def getLocationIT(update, context, stateIT):
     jsonContent = apiRequestItaly()
     try:
         if state_it == "P.A. Bolzano P.A. Trento" :
-            print("Awesome")
             for each in jsonContent:
                 if str(each["region"]) == "P.A. Bolzano":
                     confirmed = str(each['totalCases'])
