@@ -24,6 +24,7 @@ If you share any location which inside
 <b>11)Brazil</b> get statewise stats,\
 <b>12)France</b> get Département stats,\
 <b>13)Italy</b> get statewise stats,\
+<b>14)Mexico</b> get statewise stats,\
 For all other countries get just country wise stats,\
 <b>Just point the pin on the map and share it</b>
 
@@ -47,6 +48,8 @@ I am using Google Cloud Platform instance to host the bot.
 - https://opendata.arcgis.com/datasets/3afa9ce11b8842cb889714611e6f3076_0.geojson
 - https://interactive.guim.co.uk/docsdata/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE.json
 - https://disease.sh/v2/gov/Italy
+- https://www.gob.cl/coronavirus/cifrasoficiales/#datos
+- https://api.apify.com/v2/key-value-stores/vpfkeiYLXPIDIea2T/records/LATEST?disableRedirect=true
 
 #### To get Geo location I am using: 
 

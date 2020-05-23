@@ -15,6 +15,8 @@ from indianDistricts import districtIN
 import pandas as pd
 from franceRegion import regionFRA
 from italy import regionIT
+from usaStateCode import usaStateCode
+from mexico import stateMX
 from pyshorteners import Shorteners
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -49,11 +51,16 @@ def apiRequestUSA():
 
     return jstates,states_us,county_us
 
+def apiUSAStates(stateName):
+    usaState = requests.get("https://disease.sh/v2/states/"+stateName+"?yesterday=true")
+    states_us_new = usaState.json()
+    return states_us_new
+
 def apiRequestGermany():
     germany = requests.get("https://rki-covid-api.now.sh/api/states")
     statejson = germany.json()
     return statejson
-    
+
 def apiWorldNew():
     world = requests.get("https://corona.lmao.ninja/v2/all").json()
     return world
@@ -107,6 +114,11 @@ def apiRequestItaly():
     ita = requests.get("https://disease.sh/v2/gov/Italy")
     ita_states = ita.json()
     return ita_states
+
+def apiRequestMexStates():
+    mex = requests.get("https://api.apify.com/v2/key-value-stores/vpfkeiYLXPIDIea2T/records/LATEST?disableRedirect=true")
+    mex_states = mex.json()
+    return mex_states
 
 APIKey_LQ = ""
 API_key_M = ""
@@ -546,7 +558,6 @@ def getLocation(update,context):
     print(current_lat)
     print(current_lon)
     jsonContent = apiRequestsIndia()
-    jsonContentUS = apiRequestUSA()
     contents = requests.get("https://locationiq.com/v1/reverse.php?key="+APIKey_LQ+"&lat="+current_lat+"&lon="+current_lon+"&format=json").json()
     countryName = contents["address"]["country"]
     country = contents["address"]["country_code"]
@@ -594,16 +605,23 @@ def getLocation(update,context):
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         state = contents["address"]["state"]
         print(state)
-        for each in jsonContentUS[0]:
-            if str(each["name"]) == state:
-                value = us_statewise_stats(str(each["state"]))
+        jsonContentUS = apiUSAStates(state)
+        #for each in jsonContentUS:
+        active = str(jsonContentUS["active"])
+        cases = str(jsonContentUS["cases"])
+        todayCases = str(jsonContentUS["todayCases"])
+        deaths = str(jsonContentUS["deaths"])
+        todayDeaths = str(jsonContentUS["todayDeaths"])
+        recovered = ((int(cases)) - (int(active)))
+        updated = str(datetime.fromtimestamp((jsonContentUS["updated"])/1000).replace(microsecond=0))
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+state+"*\
         \n\
-        \nConfirmed Cases: *"+value[0]+"*\
-        \nDeath Cases    : *"+value[1]+"*\
-        \nRecovered Cases: *"+value[2]+"*\
-        \nThis data was last updated at : *2020/"+value[3]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        \nConfirmed Cases   : *"+cases+"**(↑"+todayCases+")*\
+        \nDeath Cases         : *"+deaths+"**(↑"+todayDeaths+")*\
+        \nActive Cases        : *"+active+"*\
+        \nRecovered Cases   : *"+str(recovered)+"*\
+        \nThis data was last updated at : *"+updated+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocation2(update,context,current_lat,current_lon)
         #links(context,update,current_lat,current_lon)
         captureID(update)
@@ -795,12 +813,24 @@ def getLocation(update,context):
         \nThis data was last updated at : *"+content_k[4]+"*\
         \nBelow is the pdf from Minsal from yesterday",parse_mode=telegram.ParseMode.MARKDOWN)
         try:
-            context.bot.send_document(chat_id=update.effective_chat.id,document="https://cdn.digital.gob.cl/public_files/Campa%C3%B1as/Corona-Virus/Reportes/"+tday+"_Reporte_Covid19.pdf")
+            context.bot.send_document(chat_id=update.effective_chat.id,document="https://cdn.digital.gob.cl/public_files/Campa%C3%B1as/Corona-Virus/Reportes/"+tday+"Reporte_Covid19.pdf")
         except:
-            context.bot.send_document(chat_id=update.effective_chat.id,document="https://cdn.digital.gob.cl/public_files/Campa%C3%B1as/Corona-Virus/Reportes/"+yday+"_Reporte_Covid19.pdf")
+            context.bot.send_document(chat_id=update.effective_chat.id,document="https://cdn.digital.gob.cl/public_files/Campa%C3%B1as/Corona-Virus/Reportes/"+yday+"Reporte_Covid19.pdf")
         
         print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
-    
+    elif country == "mx" :#country = url['country_code']
+        content_k = countryWiseStatsCollect(country)
+        state_mx = contents["address"]["state"]
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
+        \n\
+        \nConfirmed Cases    : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
+        \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
+        \nRecovered Cases    : *"+content_k[2]+"*\
+        \nCurrent Population : *"+content_k[3]+"*\
+        \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        getLocationMX(update,context,state_mx)
+        print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
     else :#country = url['country_code']
         print(contents)
         content_k = countryWiseStatsCollect(country)
@@ -1021,7 +1051,27 @@ def usa_state(update, context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.message.chat_id, text="Add a statecode, Ex: '/USAState AK'",parse_mode=telegram.ParseMode.MARKDOWN)
     elif(regex.search(us_state_code)) == None:
-        content_k = us_statewise_stats(us_state_code)
+        state_it = usaStateCode(us_state_code)
+        sN = getUS_stateName(us_state_code)
+        jsonContentUS = apiUSAStates(state_it)
+        #for each in jsonContentUS:
+        active = str(jsonContentUS["active"])
+        cases = str(jsonContentUS["cases"])
+        todayCases = str(jsonContentUS["todayCases"])
+        deaths = str(jsonContentUS["deaths"])
+        todayDeaths = str(jsonContentUS["todayDeaths"])
+        recovered = ((int(cases)) - (int(active)))
+        updated = str(datetime.fromtimestamp((jsonContentUS["updated"])/1000).replace(microsecond=0))
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The stats for *"+sN+"*\
+        \n\
+        \nConfirmed Cases  : *"+cases+"**(↑"+todayCases+")*\
+        \nDeath Cases         : *"+deaths+"**(↑"+todayDeaths+")*\
+        \nActive Cases        : *"+active+"*\
+        \nRecovered Cases  : *"+str(recovered)+"*\
+        \nThis data was last updated at : *"+updated+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        
+        """ content_k = us_statewise_stats(us_state_code)
         sN = getUS_stateName(us_state_code)
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The stats for *"+sN+"* are:\
@@ -1030,6 +1080,7 @@ def usa_state(update, context):
         \nDeath Cases       : *"+content_k[1]+"*\
         \nRecovered Cases  : *"+content_k[2]+"*\
         \nThis data was last updated at : *2020/"+content_k[3]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+     """
     else:
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.message.chat_id, text="Add a statecode correctly , Ex: '/USAState AK",parse_mode=telegram.ParseMode.MARKDOWN)   
@@ -1498,6 +1549,30 @@ def getLocationIT(update, context, stateIT):
     logger.info("location for county handler IT used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
 
+def getLocationMX(update, context, state_mx):
+    state_mex = state_mx
+    print(state_mex)
+    
+    state = stateMX(state_mex)
+    print(state)
+    jsonContent = apiRequestMexStates()
+    updatedTime = str(jsonContent["lastUpdatedAtSource"])
+    d1 = datetime.strptime(updatedTime,"%Y-%m-%dT%H:%M:%S.%fZ")
+    uT = d1.strftime("%Y-%m-%d %H:%M:%S")
+    confirmed = str(jsonContent["State"][state]['infected'])
+    deaths = str(jsonContent["State"][state]['deceased'])
+    try:
+        context.bot.send_message(chat_id=update.message.chat_id,text="The location you shared is in Département *"+state+"*\
+        \n\
+        \nConfirmed Cases   : *"+confirmed+"*\
+        \nDeath Cases           : *"+deaths+"*\
+        \nThis data was last updated on *"+uT+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The data for state *"+state_mex+"* is not there at the moment",parse_mode=telegram.ParseMode.MARKDOWN)
+
+    logger.info("location for county handler MX used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
+
 def germanToEnglish(update,context,var,var1):
     current_lat = var
     current_lon = var1
@@ -1545,7 +1620,6 @@ def healthCheck(update,context):
             context.bot.send_message(chat_id=update.effective_chat.id, text="API is Up and running",parse_mode=telegram.ParseMode.MARKDOWN)
        
 def main():
-    
     BotToken = ""
     updater = Updater(BotToken,use_context=True)
     print (today)

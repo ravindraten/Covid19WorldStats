@@ -17,3 +17,5 @@ https://covid19-brazil-api.now.sh/api/report/v1
 https://api.covid19tracking.narrativa.com/api/2020-05-17/country/spain/region/all
 https://coronavirusapi-france.now.sh/LiveDataByDepartement?Departement=Paris
 https://disease.sh/v2/gov/Italy
+https://disease.sh/v2/states/Texas?yesterday=true
+https://api.apify.com/v2/key-value-stores/vpfkeiYLXPIDIea2T/records/LATEST?disableRedirect=true
