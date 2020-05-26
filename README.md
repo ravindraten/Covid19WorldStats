@@ -57,3 +57,8 @@ I am using Google Cloud Platform instance to host the bot.
 - http://mapmyindia.com
 - https://api.bigdatacloud.net
 
+#### Sample TimeLine Plot
+
+A sample plot is shown as below:
+
+![alt text](https://github.com/ravindraten/Covid19WorldStats/blob/master/Italy_timeline.jpeg "Sample Plot")
