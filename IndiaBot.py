@@ -341,12 +341,13 @@ def countryWiseStatsCollect(var):
             activePerOneMillion = str(each["activePerOneMillion"])
             recoveredPerOneMillion = str(each["recoveredPerOneMillion"])
             testsPerOneMillion = str(each["testsPerOneMillion"])
+            active = str((each["cases"])-(each["deaths"])-(each["recovered"]))
     for each in jsonC:
         if str(each["countryInfo"]["iso2"]) == str(var).upper():
             confirmed_yday = str(each["cases"])
             new_case_yday = str(each["todayCases"])
             deaths_yday = str(each["deaths"])
-    return confirmed,deaths,recovered,populationHere,lastupdatedtime,countryName,new_case,new_deaths,casesPerOneMillion,deathsPerOneMillion,activePerOneMillion,recoveredPerOneMillion,testsPerOneMillion,confirmed_yday,new_case_yday,deaths_yday
+    return confirmed,deaths,recovered,populationHere,lastupdatedtime,countryName,new_case,new_deaths,casesPerOneMillion,deathsPerOneMillion,activePerOneMillion,recoveredPerOneMillion,testsPerOneMillion,confirmed_yday,new_case_yday,deaths_yday,active
 
 def countryWiseData(update, context):
     country_code = ' '.join(context.args)
@@ -363,10 +364,11 @@ def countryWiseData(update, context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The stats for country *"+content_k[5]+"* \
         \n\
+        \nActive Cases           : *"+content_k[16]+"*\
         \nConfirmed Cases    : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases    : *"+content_k[2]+"*\
-        \nCases Yesterday   : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nCases Yesterday     : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nCases per million    : *"+content_k[8]+"*\
         \nDeath per million    : *"+content_k[9]+"*\
@@ -565,7 +567,7 @@ def start(update,context):
 def captureID(update):
     f= open("userID.txt","w+")
     f= open("guru99.txt", "a+")
-    f.write("\nUser is %d\r" % (update.message.chat.id)+": "+(update.message.from_user.first_name))
+    f.write("\nUser is %d\r" % (update.message.chat.id)+": "+(update.message.from_user.first_name)+": "+str(today))
 
 def officialTelegramChannels(update,context):
     logger.info("officialTelegramChannels handler used ", update.message.chat.id, update.message.from_user.first_name)
@@ -613,7 +615,7 @@ def getLocation(update,context):
     
     if country == "in":
         contentIN = india(update,context)
-        #countryTrend(update,context,country,contentIN[0],contentIN[1],countryName)
+        countryTrend(update,context,country,contentIN[0],contentIN[1],countryName)
         state_district = contents["address"]["state_district"]
         try:
             state = contents["address"]["state"]
@@ -649,9 +651,10 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="You are currently located in or the Map location shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
-        \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nDeath Cases         : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
+        \nRecovered Cases  : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
@@ -685,6 +688,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
@@ -702,6 +706,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases          : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
@@ -718,6 +723,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
@@ -733,6 +739,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
@@ -756,6 +763,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
@@ -774,6 +782,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
@@ -791,6 +800,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
@@ -809,6 +819,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
@@ -828,6 +839,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases          : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
@@ -844,6 +856,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
@@ -862,6 +875,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
@@ -881,6 +895,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
@@ -900,6 +915,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases    : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases    : *"+content_k[2]+"*\
@@ -915,6 +931,7 @@ def getLocation(update,context):
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* \
         \n\
+        \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases   : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases           : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
