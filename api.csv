@@ -20,3 +20,4 @@ https://disease.sh/v2/gov/Italy
 https://disease.sh/v2/states/Texas?yesterday=true
 https://api.apify.com/v2/key-value-stores/vpfkeiYLXPIDIea2T/records/LATEST?disableRedirect=true
 https://api.covid19india.org/zones.json
+http://api.coronatracker.com/v1/travel-alert
