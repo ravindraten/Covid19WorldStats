@@ -36,7 +36,6 @@ I am using Google Cloud Platform instance to host the bot.
 
 - <b>[Covid19India API](https://github.com/covid19india/api)</b>
 - <b>[NovelCOVID REST API](https://github.com/NovelCovid/API)</b>
-- https://www.covid19india.org/
 - http://corona-api.com/countries
 - https://covidtracking.com
 - https://data.covid19japan.com/summary/latest.json
