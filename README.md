@@ -34,9 +34,8 @@ I am using Google Cloud Platform instance to host the bot.
 
 #### API used to collect data are from below:
 
-
-[Covid19India API](https://github.com/covid19india/api)
-[NovelCOVID REST API](https://github.com/NovelCovid/API)
+- <b>[Covid19India API](https://github.com/covid19india/api)</b>
+- <b>[NovelCOVID REST API](https://github.com/NovelCovid/API)</b>
 - https://www.covid19india.org/
 - http://corona-api.com/countries
 - https://covidtracking.com
