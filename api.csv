@@ -1,12 +1,12 @@
 urls
 https://api.covid19india.org/data.json
 https://api.covid19india.org/v2/state_district_wise.json
-https://corona.lmao.ninja/v2/countries
+https://disease.sh/v2/countries
 https://covidtracking.com/api/states/info
 https://covidtracking.com/api/states
-https://corona.lmao.ninja/v2/jhucsse/counties
+https://disease.sh/v2/jhucsse/counties
 https://rki-covid-api.now.sh/api/states
-https://corona.lmao.ninja/v2/all
+https://disease.sh/v2/all
 https://data.covid19japan.com/summary/latest.json
 https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_latest.json
 https://opendata.arcgis.com/datasets/620c2ab925f64ed5979d251ba7753b7f_0.geojson
@@ -19,3 +19,4 @@ https://coronavirusapi-france.now.sh/LiveDataByDepartement?Departement=Paris
 https://disease.sh/v2/gov/Italy
 https://disease.sh/v2/states/Texas?yesterday=true
 https://api.apify.com/v2/key-value-stores/vpfkeiYLXPIDIea2T/records/LATEST?disableRedirect=true
+https://api.covid19india.org/zones.json
