@@ -17,6 +17,7 @@ from franceRegion import regionFRA
 from italy import regionIT
 from usaStateCode import usaStateCode
 from mexico import stateMX
+from malaysiaState import state_malaysia
 from pyshorteners import Shorteners
 import random
 import pandas as pd 
@@ -24,6 +25,7 @@ import matplotlib
 import matplotlib.pyplot as plt 
 import wget
 import os
+import xlrd
 from matplotlib.ticker import (AutoMinorLocator, MultipleLocator)
 import flag
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -48,6 +50,11 @@ def apiZoneIndia():
     r= requests.get('https://api.covid19india.org/zones.json')
     zone = r.json()
     return zone
+
+def apiTestedIndia():
+    tr= requests.get('https://api.covid19india.org/state_test_data.json')
+    test_data = tr.json()
+    return test_data
 
 def apiWorld():
     rCountry1 = requests.get('https://disease.sh/v2/countries')
@@ -220,7 +227,40 @@ def zones(update, context, districtIndia):
             if zone == "Orange":
                 zone = "ORANGE 🔶"
     return zone
-              
+
+def testRate(stateName):
+    jsonContent = apiTestedIndia()
+    today = datetime.today()
+    tday = today.strftime('%d.%m.%Y')
+    yesterday = today - timedelta(days = 1)
+    yday = yesterday.strftime('%d/%m/%Y')
+    for each in jsonContent["states_tested_data"]:
+        if str(each["state"]) == stateName:
+            if str(each["updatedon"])==str(yday):
+                testpositivityrate = str(each["testpositivityrate"])
+                if testpositivityrate == "":
+                    totaltested = int(each["totaltested"])
+                    positive = int(each["positive"])
+                    testpositivityrate = str(round((positive/totaltested)*100,2))+"%"
+                lastUpdated = str(each["updatedon"])
+    return testpositivityrate,str(totaltested),lastUpdated
+
+def testRateIndia(cases):
+    jsonContent = apiRequestsIndia()
+    today = datetime.today()
+    tday = today.strftime('%d/%m/%Y')
+    yesterday = today - timedelta(days = 1)
+    yday = yesterday.strftime('%d/%m/%Y')
+    for each in jsonContent[0]["tested"]:
+        d = str(each["updatetimestamp"]).split(" ")
+        if d[0]==str(tday):
+            testpositivityrate = str(each["testpositivityrate"])
+            if testpositivityrate == "":
+                totalsamplestested = int(each["totalsamplestested"])
+                positive = int(cases)
+                testpositivityrate = str(round((positive/totalsamplestested)*100,2))+"%"
+    return testpositivityrate,str(totalsamplestested)
+
 def new_count_India():
     jsonContent = apiRequestsIndia()
     for each in jsonContent[0]["statewise"]:
@@ -243,9 +283,10 @@ def new_count_India():
             totaldeathyday = str(each["totaldeceased"])
     return confirmed,deaths,recovered,deltaconfirmed,lastupdatedtime,deltarecovered,deltadeaths,active,totalconfirmedyday,dailyconfirmedyday,totaldeathyday
 
-def india(update, context, country):
+def india(update, context):
     content = new_count_India()
-    FlagIcon = flag.flag(country)
+    tr = testRateIndia(content[0])
+    FlagIcon = flag.flag("IN")
     chat_id = update.message.chat_id
     context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     context.bot.send_message(chat_id=chat_id, text="Below are the stats for *India* "+FlagIcon+":\
@@ -255,6 +296,8 @@ def india(update, context, country):
     \nDeath cases            : *"+content[1]+"* *(↑"+content[6]+")*\
     \nRecovered cases    : *"+content[2]+"* *(↑"+content[5]+")*\
     \nCases Yesterday    : *"+content[8]+"* *(↑"+content[9]+")*\
+    \nTest Positivity Rate : *"+tr[0]+"*\
+    \nTest samples tested : *"+tr[1]+"*\
     \nThis data was last updated at : *"+content[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     print("This User checked India: "+update.message.from_user.first_name)
     logger.info("India handler used ", update.message.chat.id, update.message.from_user.first_name)
@@ -274,6 +317,7 @@ def state_new_count_India(var):
            active = str(each["active"])
            deltarecovered = str(each["deltarecovered"])
            deltadeaths = str(each["deltadeaths"])
+    
     return confirmed,deaths,recovered,deltaconfirmed,lastupdatedtime,stateName,deltarecovered,deltadeaths,active
 
 def indianstate(update, context):
@@ -287,6 +331,7 @@ def indianstate(update, context):
         context.bot.send_message(chat_id=update.message.chat_id, text="Add a statecode, Ex: '/state KA'",parse_mode=telegram.ParseMode.MARKDOWN)
     elif(regex.search(state_code)) == None:
         content_k = state_new_count_India(state_code)
+        testR = testRate(content_k[5])
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="Below are the stats for *"+content_k[5]+"* \
         \n\
@@ -294,6 +339,8 @@ def indianstate(update, context):
         \nConfirmed cases    : *"+content_k[0]+"* *(↑"+content_k[3]+")*\
         \nDeath cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered cases    : *"+content_k[2]+"* *(↑"+content_k[6]+")*\
+        \nTest Positivity Rate : *"+testR[0]+"*\
+        \nTest samples tested : *"+testR[1]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     else:
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
@@ -327,7 +374,6 @@ def country_code(update, context):
     elif(regex.search(var)) == None:
         letter = var.capitalize()
         print(letter)
-        
         jsonContent = apiWorld()
         country = []
         country_code = []
@@ -336,7 +382,7 @@ def country_code(update, context):
             if countryName.startswith(letter):
                 country.append(each["country"])
                 country_code.append(each["countryInfo"]["iso2"])
-            
+
         countryName_countryCode = ' \n'.join([str(a) +" use code : "+ b for a,b in zip(country,country_code)])
         chat_id = update.message.chat_id
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
@@ -366,12 +412,13 @@ def countryWiseStatsCollect(var):
             recoveredPerOneMillion = str(each["recoveredPerOneMillion"])
             testsPerOneMillion = str(each["testsPerOneMillion"])
             active = str((each["cases"])-(each["deaths"])-(each["recovered"]))
+            testPositivityRate = str(round(((int(each["cases"]))/(int(each["tests"])))*100,2))+"%"
     for each in jsonC:
         if str(each["countryInfo"]["iso2"]) == str(var).upper():
             confirmed_yday = str(each["cases"])
             new_case_yday = str(each["todayCases"])
             deaths_yday = str(each["deaths"])
-    return confirmed,deaths,recovered,populationHere,lastupdatedtime,countryName,new_case,new_deaths,casesPerOneMillion,deathsPerOneMillion,activePerOneMillion,recoveredPerOneMillion,testsPerOneMillion,confirmed_yday,new_case_yday,deaths_yday,active
+    return confirmed,deaths,recovered,populationHere,lastupdatedtime,countryName,new_case,new_deaths,casesPerOneMillion,deathsPerOneMillion,activePerOneMillion,recoveredPerOneMillion,testsPerOneMillion,confirmed_yday,new_case_yday,deaths_yday,active,testPositivityRate
 
 def countryWiseData(update, context):
     country_code = ' '.join(context.args)
@@ -400,6 +447,7 @@ def countryWiseData(update, context):
         \nActive per million    : *"+content_k[10]+"*\
         \nRecovered per million : *"+content_k[11]+"*\
         \nTests per million    : *"+content_k[12]+"*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         #context.bot.send_photo(chat_id=update.message.chat_id, photo=photo_file,parse_mode=telegram.ParseMode.MARKDOWN)
         print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
@@ -641,13 +689,15 @@ def getLocation(update,context):
     countryName = contents["address"]["country"]
     country = contents["address"]["country_code"]
     FlagIcon = flag.flag(country)
+    #print(contents)
     if country == "in":
-        contentIN = india(update,context,country)
+        contentIN = india(update,context)
         countryTrend(update,context,country,contentIN[0],contentIN[1],countryName)
-        state_district = contents["address"]["state_district"]
         try:
             state = contents["address"]["state"]
+            testR = testRate(state)
         except:
+            state_district = contents["address"]["state_district"]
             if state_district == "North Goa":
                 state = "Goa"
             if state_district == "South Goa":
@@ -670,6 +720,8 @@ def getLocation(update,context):
         \nConfirmed cases : *"+confirmed+"* *(↑"+deltaconfirmed+")*\
         \nDeath cases         : *"+deaths+"* *(↑"+deltadeaths+")*\
         \nRecovered cases : *"+recovered+"* *(↑"+deltarecovered+")*\
+        \nTest Positivity Rate : *"+testR[0]+"*\
+        \nTest samples tested : *"+testR[1]+"*\
         \nThis data was last updated at : *"+lastupdatedtime+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         getLocation1(update,context,current_lat,current_lon,lastupdatedtime)
         
@@ -684,6 +736,7 @@ def getLocation(update,context):
         \nDeath Cases         : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases  : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         countryTrend(update,context,country,content_k[13],content_k[15],countryName)
@@ -725,6 +778,7 @@ def getLocation(update,context):
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         countryTrend(update,context,country,content_k[13],content_k[15],countryName)
@@ -743,6 +797,7 @@ def getLocation(update,context):
         \nDeath Cases          : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         countryTrend(update,context,country,content_k[13],content_k[15],countryName)
@@ -760,6 +815,7 @@ def getLocation(update,context):
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         countryTrend(update,context,country,content_k[13],content_k[15],countryName)
@@ -776,6 +832,7 @@ def getLocation(update,context):
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         #links(context,update,current_lat,current_lon)
@@ -800,6 +857,7 @@ def getLocation(update,context):
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         countryTrend(update,context,country,content_k[13],content_k[15],countryName)
@@ -819,6 +877,7 @@ def getLocation(update,context):
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         countryTrend(update,context,country,content_k[13],content_k[15],countryName)
@@ -837,6 +896,7 @@ def getLocation(update,context):
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         countryTrend(update,context,country,content_k[13],content_k[15],countryName)
@@ -856,6 +916,7 @@ def getLocation(update,context):
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nTests per million    : *"+content_k[12]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
@@ -876,6 +937,7 @@ def getLocation(update,context):
         \nDeath Cases          : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         countryTrend(update,context,country,content_k[13],content_k[15],countryName)
@@ -893,6 +955,7 @@ def getLocation(update,context):
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         countryTrend(update,context,country,content_k[13],content_k[15],countryName)
@@ -912,6 +975,7 @@ def getLocation(update,context):
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         countryTrend(update,context,country,content_k[13],content_k[15],countryName)
@@ -932,6 +996,7 @@ def getLocation(update,context):
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*\
         \nBelow is the pdf from Minsal from yesterday",parse_mode=telegram.ParseMode.MARKDOWN)
@@ -952,10 +1017,29 @@ def getLocation(update,context):
         \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases    : *"+content_k[2]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         countryTrend(update,context,country,content_k[13],content_k[15],countryName)
         getLocationMX(update,context,state_mx)
+        print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
+    elif country == "my" :#country = url['country_code']
+        content_k = countryWiseStatsCollect(country)
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+content_k[5]+"* "+FlagIcon+"\
+        \n\
+        \nActive Cases        : *"+content_k[16]+"*\
+        \nConfirmed Cases    : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
+        \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
+        \nRecovered Cases    : *"+content_k[2]+"*\
+        \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
+        \nCurrent Population : *"+content_k[3]+"*\
+        \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
+        countryTrend(update,context,country,content_k[13],content_k[15],countryName)
+        contentsBDC = requests.get("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude="+current_lat+"&longitude="+current_lon+"&localityLanguage=en").json()
+        stateMY = contentsBDC["principalSubdivision"]
+        getLocationMY(update,context,stateMY)
         print("This User checked "+ content_k[5] +":"+update.message.from_user.first_name)
     else :#country = url['country_code']
         print(contents)
@@ -968,6 +1052,7 @@ def getLocation(update,context):
         \nDeath Cases           : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
         \nCases Yesterday    : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
+        \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
         countryTrend(update,context,country,content_k[13],content_k[15],countryName)
@@ -1089,7 +1174,7 @@ def getLocation1(update, context, var, var1, time_u):
     last_updated_time = time_u
     
     contents = requests.get("http://apis.mapmyindia.com/advancedmaps/v1/"+API_key_M+"/rev_geocode?lat="+current_lat+"&lng="+current_lon+"&format=json").json()
-    print(contents)
+    #print(contents)
     for each in contents['results']:
         stateName = str(each["state"])
         district = str(each["district"])
@@ -1109,6 +1194,7 @@ def getLocation1(update, context, var, var1, time_u):
         recovered = str(state["districtData"][dist]["recovered"])
         delta_recovered = str(state["districtData"][dist]["delta"]["recovered"])
         print(recovered)
+        testR = testRate(stateName)
         context.bot.send_message(chat_id=update.message.chat_id,text="The location you shared is in *"+dist+"*\
         \n\
         \nActive Cases        : *"+active+"*\
@@ -1741,6 +1827,17 @@ def germanToEnglish(update,context,var,var1):
         state = contents["address"]["city"]
 
     return state
+
+def getLocationMY(update, context, stateMY):
+    val = state_malaysia(stateMY)
+    context.bot.send_message(chat_id=update.message.chat_id,text="The location you shared is in state *"+stateMY+"*\
+        \n\
+        \nConfirmed Cases   : *"+val[0]+"**("+val[3]+")*\
+        \nDeath Cases           : *"+val[1]+"*\
+        \nThis data was last updated on *"+val[2]+"*",parse_mode=telegram.ParseMode.MARKDOWN) 
+
+    logger.info("location for county handler MY used ", update.message.chat.id, update.message.from_user.first_name)
+    captureID(update)
 
 def healthCheck(update,context):
     df= pd.read_csv('api.csv')

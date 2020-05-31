@@ -75,6 +75,12 @@ def districtIN(var):
         district = "Devbhumi Dwarka"
     if var == "Kachchh":
         district = "Kutch"
+    if var == "Kanniyakumari":
+        district = "Kanyakumari"
+    if var == "Pashchim Champaran":
+        district = "West Champaran"
+    if var == "Sepahijala":
+        district = "Sipahijala"
     else:
         district = var
     return district

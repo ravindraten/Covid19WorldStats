@@ -3,3 +3,10 @@ pylint
 geocoder
 requests
 pyshorteners
+openpyxl
+lxml
+urllib
+tweepy
+flag
+wget
+xlrd
