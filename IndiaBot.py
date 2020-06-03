@@ -236,16 +236,22 @@ def testRate(stateName):
     yday = yesterday.strftime('%d/%m/%Y')
     for each in jsonContent["states_tested_data"]:
         if str(each["state"]) == stateName:
+            print(stateName)
+            print(str(each["updatedon"]))
+            print(str(yday))
             if str(each["updatedon"])==str(yday):
                 testpositivityrate = str(each["testpositivityrate"])
+                totaltested = int(each["totaltested"])
                 if testpositivityrate == "":
                     totaltested = int(each["totaltested"])
+                    print(totaltested)
                     positive = int(each["positive"])
                     testpositivityrate = str(round((positive/totaltested)*100,2))+"%"
                 lastUpdated = str(each["updatedon"])
     return testpositivityrate,str(totaltested),lastUpdated
 
 def testRateIndia(cases):
+    print(cases)
     jsonContent = apiRequestsIndia()
     today = datetime.today()
     tday = today.strftime('%d/%m/%Y')
@@ -253,8 +259,21 @@ def testRateIndia(cases):
     yday = yesterday.strftime('%d/%m/%Y')
     for each in jsonContent[0]["tested"]:
         d = str(each["updatetimestamp"]).split(" ")
-        if d[0]==str(tday):
+        print(d[0])
+        print(str(tday))
+        print(str(yday))
+        if(d[0]==str(tday)):
+            print(d[0])
             testpositivityrate = str(each["testpositivityrate"])
+            totalsamplestested = int(each["totalsamplestested"])
+            if testpositivityrate == "":
+                totalsamplestested = int(each["totalsamplestested"])
+                positive = int(cases)
+                testpositivityrate = str(round((positive/totalsamplestested)*100,2))+"%"
+        elif(d[0]==str(yday)):
+            print(d[0])
+            testpositivityrate = str(each["testpositivityrate"])
+            totalsamplestested = int(each["totalsamplestested"])
             if testpositivityrate == "":
                 totalsamplestested = int(each["totalsamplestested"])
                 positive = int(cases)
@@ -276,7 +295,8 @@ def new_count_India():
     for each in jsonContent[0]["cases_time_series"]:
         today = datetime.today()
         yesterday = today - timedelta(days = 1)
-        yday = yesterday.strftime('%d %b')
+        yday = yesterday.strftime('%d %B')
+        print(yday)
         if str(each["date"]).strip() == str(yday):
             totalconfirmedyday = str(each["totalconfirmed"])
             dailyconfirmedyday = str(each["dailyconfirmed"])
@@ -297,7 +317,7 @@ def india(update, context):
     \nRecovered cases    : *"+content[2]+"* *(↑"+content[5]+")*\
     \nCases Yesterday    : *"+content[8]+"* *(↑"+content[9]+")*\
     \nTest Positivity Rate : *"+tr[0]+"*\
-    \nTest samples tested : *"+tr[1]+"*\
+    \nTotal samples tested : *"+tr[1]+"*\
     \nThis data was last updated at : *"+content[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     print("This User checked India: "+update.message.from_user.first_name)
     logger.info("India handler used ", update.message.chat.id, update.message.from_user.first_name)
@@ -340,7 +360,7 @@ def indianstate(update, context):
         \nDeath cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered cases    : *"+content_k[2]+"* *(↑"+content_k[6]+")*\
         \nTest Positivity Rate : *"+testR[0]+"*\
-        \nTest samples tested : *"+testR[1]+"*\
+        \nTotal samples tested : *"+testR[1]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     else:
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
@@ -563,7 +583,7 @@ def commands(update,context):
     \n<b>/india</b> - Fetch stats of India \n\
     \n<b>/statecode</b> - Fetch statewise code \n\
     \n<b>/state</b> statecode - Fetch stats per state,\
-    Now for karnataka use <b>'/state KA'</b> without the single quotes\n \
+    \nNow for karnataka use <b>'/state KA'</b> without the single quotes\n \
     \n<b>/districtwise</b> - Fetch stats district wise of a particular state using the state code \n\
     \n<b>/world</b> - Fetch stats for the entire world \n\
     \n<b>/countrycode</b> - Fetch country codes ,\
@@ -616,6 +636,8 @@ def help(update,context):
     \n<b>11)Brazil</b> get statewise stats,\
     \n<b>12)France</b> get Département stats,\
     \n<b>13)Italy</b> get statewise stats,\
+    \n<b>14)Mexico</b> get statewise stats,\
+    \n<b>15)Malaysia</b> get statewise stats,\
     \nAll other countries get just country wise stats,\n\
     \n<b>Just point the pin on the map and share it</b> \n \
     \n /commands for listing all the available commands",parse_mode=telegram.ParseMode.HTML,disable_web_page_preview=True)
@@ -2001,10 +2023,50 @@ def travelAlert(update, context):
         logger.info("Country handler used ", update.message.chat.id, update.message.from_user.first_name)
         captureID(update)
 
+def get_state_msg():
+    
+    jsonContent = apiRequestsIndia()
+    state_data = sorted(jsonContent[0]["statewise"], key = lambda i: (int(i['deltaconfirmed']),i['state']),reverse=True)
+    #state_msg = "State-wise Covid-19 stats till now in <b>{state_name}</b>\n".format(state_name=state_name)
+    for each in state_data:
+        confirmed = str(each["confirmed"]) 
+        deltaconfirmed = str(each["deltaconfirmed"])
+        stateName = str(each["state"])
+    return state_data
+
+def indianStatesSorted(update, context):
+    #var = ' '.join(context.args)
+    state = []
+    confirmed =[]
+    delta_confirmed=[]
+    jsonContent = apiRequestsIndia()
+    for each in jsonContent[0]["statewise"]:
+        delta_confirmed.append(int(each["deltaconfirmed"]))
+        state.append(str(each["state"]))
+        confirmed.append(str(each["confirmed"]))
+    #print(confirmed)
+    delta_confirmed.sort(reverse = True)
+    j=0
+    for i in jsonContent[0]["statewise"]:
+        for each in jsonContent[0]["statewise"]:
+            confirmedN = each["deltaconfirmed"]
+            if (i == confirmedN):
+                delta_confirmed.append(str(each["deltaconfirmed"]))
+                state.append("No:"+str(j+1)+">> "+str(each["state"])) 
+                confirmed.append(str(each["confirmed"]))
+                j += 1
+                
+    countryName_confirmed = ' \n'.join(["*"+str(a)+"*"+" has *"+ str(b) +"* new cases and *"+str(c)+"* confirmed cases" for a,b,c in zip(state,delta_confirmed,confirmed)])
+    context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+    context.bot.send_message(chat_id=update.message.chat_id, text="Indian states with new confirmed cases of Covid-19 are : \
+    \n\
+    \n"+countryName_confirmed+"",parse_mode=telegram.ParseMode.MARKDOWN)
+
 def main():
     BotToken = ""
     updater = Updater(BotToken,use_context=True)
     print (dateToday())
+    #print(get_state_msg())
     dp = updater.dispatcher
     logging.basicConfig(
         filename="bot.log",
@@ -2023,6 +2085,7 @@ def main():
     dp.add_handler(CommandHandler('official_TC',officialTelegramChannels))
     dp.add_handler(CommandHandler('topD',topD))
     dp.add_handler(CommandHandler('topC',topC))
+    dp.add_handler(CommandHandler('indianStatesSorted',indianStatesSorted))
     dp.add_handler(CommandHandler('districtwise',districtwise))
     dp.add_handler(CommandHandler('ListUSAStates',us_statewise))
     dp.add_handler(CommandHandler('USAState',usa_state))

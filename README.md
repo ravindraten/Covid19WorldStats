@@ -25,6 +25,7 @@ If you share any location which inside
 <b>12)France</b> get Département stats,\
 <b>13)Italy</b> get statewise stats,\
 <b>14)Mexico</b> get statewise stats,\
+<b>15)Malaysia</b> get statewise stats,\
 For all other countries get just country wise stats,\
 <b>Just point the pin on the map and share it</b>
 
