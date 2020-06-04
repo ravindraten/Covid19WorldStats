@@ -17,12 +17,14 @@ api = tweepy.API(auth)
 for tweet in tweepy.Cursor(api.search, q='#COVID19').items(500):
     try:
         print('\nRetweet Bot found tweet by @' + tweet.user.screen_name + '. ' + 'Attempting to retweet.')
-        tweet.retweet()
-        print('Retweet published successfully.')
+        print('@'+tweet.user.screen_name+ "is "+str(tweet.user.verified))
+        if tweet.user.verified:
+            tweet.retweet()
+            print('Retweet published successfully.')
 
-        # Where sleep(10), sleep is measured in seconds.
-        # Read Twitter's rules on automation. Don't spam!
-        sleep(randint(50,100))
+            # Where sleep(10), sleep is measured in seconds.
+            # Read Twitter's rules on automation. Don't spam!
+            sleep(randint(50,100))
 
     # Some basic error handling. Will print out why retweet failed, into your terminal.
     except tweepy.TweepError as error:
