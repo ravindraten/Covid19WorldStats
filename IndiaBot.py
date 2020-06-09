@@ -234,11 +234,14 @@ def testRate(stateName):
     tday = today.strftime('%d.%m.%Y')
     yesterday = today - timedelta(days = 1)
     yday = yesterday.strftime('%d/%m/%Y')
+    dayBeforeYday = today - timedelta(days = 2)
+    DYday = dayBeforeYday.strftime('%d/%m/%Y')
     for each in jsonContent["states_tested_data"]:
-        if str(each["state"]) == stateName:
-            print(stateName)
-            print(str(each["updatedon"]))
-            print(str(yday))
+        if stateName == "Andaman and Nicobar Islands":
+            testpositivityrate= "0.45%"
+            totaltested = "7263"
+            lastUpdated = "22/05/2020"
+        elif str(each["state"]) == stateName:
             if str(each["updatedon"])==str(yday):
                 testpositivityrate = str(each["testpositivityrate"])
                 totaltested = int(each["totaltested"])
@@ -248,7 +251,17 @@ def testRate(stateName):
                     positive = int(each["positive"])
                     testpositivityrate = str(round((positive/totaltested)*100,2))+"%"
                 lastUpdated = str(each["updatedon"])
-    return testpositivityrate,str(totaltested),lastUpdated
+            elif (str(each["updatedon"])==str(DYday)):
+                testpositivityrate = str(each["testpositivityrate"])
+                totaltested = int(each["totaltested"])
+                if testpositivityrate == "":
+                    totaltested = int(each["totaltested"])
+                    print(totaltested)
+                    positive = int(each["positive"])
+                    testpositivityrate = str(round((positive/totaltested)*100,2))+"%"
+                lastUpdated = str(each["updatedon"])
+            
+        return testpositivityrate,str(totaltested),lastUpdated
 
 def testRateIndia(cases):
     print(cases)
@@ -259,9 +272,9 @@ def testRateIndia(cases):
     yday = yesterday.strftime('%d/%m/%Y')
     for each in jsonContent[0]["tested"]:
         d = str(each["updatetimestamp"]).split(" ")
-        print(d[0])
-        print(str(tday))
-        print(str(yday))
+        #print(d[0])
+        #print(str(tday))
+        #print(str(yday))
         if(d[0]==str(tday)):
             print(d[0])
             testpositivityrate = str(each["testpositivityrate"])
@@ -296,7 +309,7 @@ def new_count_India():
         today = datetime.today()
         yesterday = today - timedelta(days = 1)
         yday = yesterday.strftime('%d %B')
-        print(yday)
+        #print(yday)
         if str(each["date"]).strip() == str(yday):
             totalconfirmedyday = str(each["totalconfirmed"])
             dailyconfirmedyday = str(each["dailyconfirmed"])
@@ -432,7 +445,10 @@ def countryWiseStatsCollect(var):
             recoveredPerOneMillion = str(each["recoveredPerOneMillion"])
             testsPerOneMillion = str(each["testsPerOneMillion"])
             active = str((each["cases"])-(each["deaths"])-(each["recovered"]))
-            testPositivityRate = str(round(((int(each["cases"]))/(int(each["tests"])))*100,2))+"%"
+            if int(each["tests"]) == 0:
+                testPositivityRate = "Not Known"
+            else:
+                testPositivityRate = str(round(((int(each["cases"]))/(int(each["tests"])))*100,2))+"%"
     for each in jsonC:
         if str(each["countryInfo"]["iso2"]) == str(var).upper():
             confirmed_yday = str(each["cases"])
@@ -2023,44 +2039,36 @@ def travelAlert(update, context):
         logger.info("Country handler used ", update.message.chat.id, update.message.from_user.first_name)
         captureID(update)
 
-def get_state_msg():
-    
-    jsonContent = apiRequestsIndia()
-    state_data = sorted(jsonContent[0]["statewise"], key = lambda i: (int(i['deltaconfirmed']),i['state']),reverse=True)
-    #state_msg = "State-wise Covid-19 stats till now in <b>{state_name}</b>\n".format(state_name=state_name)
-    for each in state_data:
-        confirmed = str(each["confirmed"]) 
-        deltaconfirmed = str(each["deltaconfirmed"])
-        stateName = str(each["state"])
-    return state_data
-
 def indianStatesSorted(update, context):
     #var = ' '.join(context.args)
+    state_N = []
     state = []
-    confirmed =[]
     delta_confirmed=[]
+    delta_c = []
+    confirmed = []
     jsonContent = apiRequestsIndia()
     for each in jsonContent[0]["statewise"]:
-        delta_confirmed.append(int(each["deltaconfirmed"]))
         state.append(str(each["state"]))
-        confirmed.append(str(each["confirmed"]))
-    #print(confirmed)
+        delta_confirmed.append(int(each["deltaconfirmed"]))
+
     delta_confirmed.sort(reverse = True)
+    top = delta_confirmed[0:10]
+    print(top)
     j=0
-    for i in jsonContent[0]["statewise"]:
+    for i in top:
         for each in jsonContent[0]["statewise"]:
-            confirmedN = each["deltaconfirmed"]
-            if (i == confirmedN):
-                delta_confirmed.append(str(each["deltaconfirmed"]))
-                state.append("No:"+str(j+1)+">> "+str(each["state"])) 
-                confirmed.append(str(each["confirmed"]))
-                j += 1
-                
-    countryName_confirmed = ' \n'.join(["*"+str(a)+"*"+" has *"+ str(b) +"* new cases and *"+str(c)+"* confirmed cases" for a,b,c in zip(state,delta_confirmed,confirmed)])
+            confirmedN = int(each["deltaconfirmed"])
+            sN = each["state"]
+            if (i == confirmedN) and (sN!="Total"):
+                delta_c.append(each["deltaconfirmed"])
+                confirmed.append(each["confirmed"])
+                state_N.append(str(each["state"])) 
+                j += 1      
+    stateName_confirmed = ' \n'.join(["*"+str(a)+"* \n Confirmed: *"+ str(c) +"* *(↑"+str(b)+")*\n"  for a,b,c in zip(state_N,delta_c,confirmed)])
     context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
-    context.bot.send_message(chat_id=update.message.chat_id, text="Indian states with new confirmed cases of Covid-19 are : \
+    context.bot.send_message(chat_id=update.message.chat_id, text="Indian states with new confirmed cases of Covid-19 for Today : \
     \n\
-    \n"+countryName_confirmed+"",parse_mode=telegram.ParseMode.MARKDOWN)
+    \n"+stateName_confirmed+"",parse_mode=telegram.ParseMode.MARKDOWN)
 
 def main():
     BotToken = ""
