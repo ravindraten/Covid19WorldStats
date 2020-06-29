@@ -99,6 +99,10 @@ def apiWorldNew():
     world = requests.get("https://disease.sh/v2/all").json()
     return world
 
+def apiWorldNewYday():
+    worldYday = requests.get("https://disease.sh/v2/all?yesterday=1").json()
+    return worldYday
+
 def apiRequestJapan():
     japan = requests.get("https://data.covid19japan.com/summary/latest.json")
     japanProvince = japan.json()
@@ -187,7 +191,12 @@ def get_count_world():
     activePerOneMillion = str(jsonContent["activePerOneMillion"])
     recoveredPerOneMillion = str(jsonContent["recoveredPerOneMillion"])
     affectedCountries = str(jsonContent["affectedCountries"])
-    return TotalConfirmed,NewConfirmed,NewDeaths,TotalDeaths,TotalRecovered,affectedCountries,active,casesPerOneMillion,deathsPerOneMillion,tests,testsPerOneMillion,activePerOneMillion,recoveredPerOneMillion
+    todayRecovered = str(jsonContent["todayRecovered"])
+
+    jsonContentYday = apiWorldNewYday()
+    TotalConfirmedYday = str(jsonContentYday["cases"])
+    NewConfirmedYday = str(jsonContentYday["todayCases"])
+    return TotalConfirmed,NewConfirmed,NewDeaths,TotalDeaths,TotalRecovered,affectedCountries,active,casesPerOneMillion,deathsPerOneMillion,tests,testsPerOneMillion,activePerOneMillion,recoveredPerOneMillion,todayRecovered,TotalConfirmedYday,NewConfirmedYday
 
 def world(update, context):
     response= requests.get('https://disease.sh/v2/all')
@@ -208,7 +217,8 @@ def world(update, context):
             \nActive cases          : *"+content[6]+"*\
             \nConfirmed cases   : *"+content[0]+"* *(↑"+content[1]+")*\
             \nDeath cases           : *"+content[3]+"* *(↑"+content[2]+")*\
-            \nRecovered cases   : *"+content[4]+"*\
+            \nRecovered cases   : *"+content[4]+"* *(↑"+content[13]+")*\
+            \nCases Yesterday   : *"+content[14]+"* *(↑"+content[15]+")*\
             \nAffected countries : *"+content[5]+"*\
             \nCases per million   : *"+content[7]+"*\
             \nDeaths per million  : *"+content[8]+"*\
@@ -316,6 +326,7 @@ def new_count_India():
            deltadeaths = str(each["deltadeaths"])
            lastupdatedtime = str(each["lastupdatedtime"])
            active = str(each["active"])
+           recoveryRate = str(round((int(each["recovered"])/(int(each["confirmed"]) - int(each["deaths"])))*100,2))+"%"
     for each in jsonContent[0]["cases_time_series"]:
         today = datetime.today()
         yesterday = today - timedelta(days = 1)
@@ -325,7 +336,7 @@ def new_count_India():
             totalconfirmedyday = str(each["totalconfirmed"])
             dailyconfirmedyday = str(each["dailyconfirmed"])
             totaldeathyday = str(each["totaldeceased"])
-    return confirmed,deaths,recovered,deltaconfirmed,lastupdatedtime,deltarecovered,deltadeaths,active,totalconfirmedyday,dailyconfirmedyday,totaldeathyday
+    return confirmed,deaths,recovered,deltaconfirmed,lastupdatedtime,deltarecovered,deltadeaths,active,totalconfirmedyday,dailyconfirmedyday,totaldeathyday,recoveryRate
 
 def india(update, context):
     content = new_count_India()
@@ -339,6 +350,7 @@ def india(update, context):
     \nConfirmed cases    : *"+content[0]+"* *(↑"+content[3]+")*\
     \nDeath cases            : *"+content[1]+"* *(↑"+content[6]+")*\
     \nRecovered cases    : *"+content[2]+"* *(↑"+content[5]+")*\
+    \nRecovery Rate          : *"+content[11]+"*\
     \nCases Yesterday    : *"+content[8]+"* *(↑"+content[9]+")*\
     \nTest Positivity Rate : *"+tr[0]+"*\
     \nTotal samples tested : *"+tr[1]+"*\
@@ -362,8 +374,9 @@ def state_new_count_India(var):
            active = str(each["active"])
            deltarecovered = str(each["deltarecovered"])
            deltadeaths = str(each["deltadeaths"])
+           recoveryRate = str(round((int(each["recovered"])/(int(each["confirmed"]) - int(each["deaths"])))*100,2))+"%"
     
-    return confirmed,deaths,recovered,deltaconfirmed,lastupdatedtime,stateName,deltarecovered,deltadeaths,active
+    return confirmed,deaths,recovered,deltaconfirmed,lastupdatedtime,stateName,deltarecovered,deltadeaths,active,recoveryRate
 
 def indianstate(update, context):
     state_code = ' '.join(context.args).upper()
@@ -384,6 +397,7 @@ def indianstate(update, context):
         \nConfirmed cases    : *"+content_k[0]+"* *(↑"+content_k[3]+")*\
         \nDeath cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered cases    : *"+content_k[2]+"* *(↑"+content_k[6]+")*\
+        \nRecovery Rate          : *"+content_k[9]+"*\
         \nTest Positivity Rate : *"+testR[0]+"*\
         \nTotal samples tested : *"+testR[1]+"*\
         \nThis data was last updated at : *"+content_k[4]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
@@ -464,12 +478,16 @@ def countryWiseStatsCollect(var):
                 testPositivityRate = "Not Known"
             else:
                 testPositivityRate = str(round(((int(each["cases"]))/(int(each["tests"])))*100,2))+"%"
+            if int(each["recovered"]) == 0:
+                recoveryRate = "Not Known"
+            else:
+                recoveryRate = str(round((int(each["recovered"])/(int(each["cases"]) - int(each["deaths"])))*100,2))+"%"
     for each in jsonC:
         if str(each["countryInfo"]["iso2"]) == str(var).upper():
             confirmed_yday = str(each["cases"])
             new_case_yday = str(each["todayCases"])
             deaths_yday = str(each["deaths"])
-    return confirmed,deaths,recovered,populationHere,lastupdatedtime,countryName,new_case,new_deaths,casesPerOneMillion,deathsPerOneMillion,activePerOneMillion,recoveredPerOneMillion,testsPerOneMillion,confirmed_yday,new_case_yday,deaths_yday,active,testPositivityRate
+    return confirmed,deaths,recovered,populationHere,lastupdatedtime,countryName,new_case,new_deaths,casesPerOneMillion,deathsPerOneMillion,activePerOneMillion,recoveredPerOneMillion,testsPerOneMillion,confirmed_yday,new_case_yday,deaths_yday,active,testPositivityRate,recoveryRate
 
 def countryWiseData(update, context):
     country_code = ' '.join(context.args)
@@ -491,6 +509,7 @@ def countryWiseData(update, context):
         \nConfirmed Cases    : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases    : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday     : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nCurrent Population : *"+content_k[3]+"*\
         \nCases per million    : *"+content_k[8]+"*\
@@ -768,6 +787,7 @@ def getLocation(update,context):
                 deltadeaths = str(each["deltadeaths"])
                 lastupdatedtime = str(each["lastupdatedtime"])
                 active = str(each["active"])
+                recoveryRate = str(round((int(each["recovered"])/(int(each["confirmed"]) - int(each["deaths"])))*100,2))+"%"
         context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(chat_id=update.effective_chat.id, text="The location you shared is in *"+state+"* \
         \n\
@@ -775,6 +795,7 @@ def getLocation(update,context):
         \nConfirmed cases : *"+confirmed+"* *(↑"+deltaconfirmed+")*\
         \nDeath cases         : *"+deaths+"* *(↑"+deltadeaths+")*\
         \nRecovered cases : *"+recovered+"* *(↑"+deltarecovered+")*\
+        \nRecovery Rate          : *"+recoveryRate+"*\
         \nTest Positivity Rate : *"+testR[0]+"*\
         \nTest samples tested : *"+testR[1]+"*\
         \nThis data was last updated at : *"+lastupdatedtime+"*",parse_mode=telegram.ParseMode.MARKDOWN)
@@ -790,6 +811,7 @@ def getLocation(update,context):
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases         : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases  : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -832,6 +854,7 @@ def getLocation(update,context):
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -851,6 +874,7 @@ def getLocation(update,context):
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases          : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -869,6 +893,7 @@ def getLocation(update,context):
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -886,6 +911,7 @@ def getLocation(update,context):
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -911,6 +937,7 @@ def getLocation(update,context):
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -931,6 +958,7 @@ def getLocation(update,context):
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -950,6 +978,7 @@ def getLocation(update,context):
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -970,6 +999,7 @@ def getLocation(update,context):
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -991,6 +1021,7 @@ def getLocation(update,context):
         \nConfirmed Cases   : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday     : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -1009,6 +1040,7 @@ def getLocation(update,context):
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -1029,6 +1061,7 @@ def getLocation(update,context):
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -1050,6 +1083,7 @@ def getLocation(update,context):
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -1071,6 +1105,7 @@ def getLocation(update,context):
         \nConfirmed Cases    : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases    : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -1087,6 +1122,7 @@ def getLocation(update,context):
         \nConfirmed Cases    : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases    : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -1106,6 +1142,7 @@ def getLocation(update,context):
         \nConfirmed Cases   : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases           : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
         \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday    : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -1248,6 +1285,7 @@ def getLocation1(update, context, var, var1, time_u):
         delta_death = str(state["districtData"][dist]["delta"]["deceased"])
         recovered = str(state["districtData"][dist]["recovered"])
         delta_recovered = str(state["districtData"][dist]["delta"]["recovered"])
+        recoveryRate = str(round((int(state["districtData"][dist]["recovered"])/(int(state["districtData"][dist]["confirmed"]) - int(state["districtData"][dist]["deceased"])))*100,2))+"%"
         print(recovered)
         testR = testRate(stateName)
         context.bot.send_message(chat_id=update.message.chat_id,text="The location you shared is in *"+dist+"*\
@@ -1256,6 +1294,7 @@ def getLocation1(update, context, var, var1, time_u):
         \nConfirmed Cases : *"+confirmed_d+"* *(↑"+new_case+")*\
         \nDeath Cases         : *"+death+"* *(↑"+delta_death+")*\
         \nRecovered Cases : *"+recovered+"* *(↑"+delta_recovered+")*\
+        \nRecovery Rate       : *"+recoveryRate+"*\
         \nZone                      : *"+zoneD+"*\
         \nThis data was last updated at *"+last_updated_time+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     except:
@@ -1894,7 +1933,6 @@ def getLocationMY(update, context, stateMY):
     logger.info("location for county handler MY used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
 
-
 def healthCheck(update,context):
     df= pd.read_csv('api.csv')
     
@@ -1971,7 +2009,7 @@ def countryTrend(update, context, code, conf, dead, countryName):
         data = data[data['Iso'].str.contains(ISO)== True]
 
         ## Total Death Percentage
-        total_death_percentage = data.Deaths.sum() / data.Cases.sum() * 100
+        total_death_percentage = round(data.Deaths.sum() / data.Cases.sum() * 100,2)
         print('\nTotal Death Percentage: ' + str(total_death_percentage) + '%')
 
         ## Total Cases and Deaths
@@ -1980,12 +2018,17 @@ def countryTrend(update, context, code, conf, dead, countryName):
         deaths = dead
         cases = conf
         country = countryName
+        percentage = []
+        for i in data.index : 
+            percentage.append(data['Deaths'][i] / data['Cases'][i] * 100)
+        data['Percentage'] = percentage
+        print(data)
         ## Plot size
         matplotlib.rcParams['figure.figsize'] = (70.0, 30.0)
         matplotlib.rcParams['font.size'] = (30)
         matplotlib.rcParams['legend.fontsize'] = (50)
         matplotlib.rcParams['xtick.major.pad']='10'
-        ## Plot for Cases And Deaths(Greece)
+        ## Plot for Cases And Deaths
         ax = plt.subplot()
         locator = mdates.HourLocator(interval=1)
         locator.MAXTICKS = 10000
@@ -1999,10 +2042,14 @@ def countryTrend(update, context, code, conf, dead, countryName):
         ax.grid()
         ax.xaxis.get_label().set_fontsize(50)
         ax.yaxis.get_label().set_fontsize(50)
-        #ax.set_xticks(rotation=45)'-*-' is not a valid value for ls; supported values are '-', '--', '-.', ':', 'None', ' ', '', 'solid','dashed', 'dashdot', 'dotted'
-        
         ax.legend()
         #plt.show()
+
+        # Plot for Death Percentage
+        ax.plot(data.set_index('Date')['Percentage'], label='Death Percentage= '+str(total_death_percentage)+'%' ,color='orange',linewidth=5.0)
+        #ax.set(xlabel='Date', ylabel='Percentage', title='Death Percentage')
+        #ax.grid()
+        ax.legend()
         plt.setp(ax.get_xticklabels(), rotation=45, horizontalalignment='right')
         plt.savefig("/home/ravindra/country/"+ISO+'.png')
     
