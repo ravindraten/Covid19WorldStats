@@ -87,6 +87,7 @@ for each in jsonContent:
     active = str(each["active"])
     code = str(each["countryInfo"]["iso2"])
     testPositivityRate = str(round(((int(each["cases"]))/(int(each["tests"])))*100,2))+"%"
+    new_recovered = str(each["todayRecovered"])
     jsonC = apiCountriesyday()
     for each in jsonC:
         if str(each["countryInfo"]["iso2"]) == code:
@@ -97,7 +98,7 @@ for each in jsonContent:
         \nActive Cases         : "+active+"\
         \nConfirmed Cases : "+confirmed+"(↑"+new_case+")\
         \nDeath Cases         : "+deaths+"(↑"+new_deaths+")\
-        \nRecovered Cases : "+recovered+"\
+        \nRecovered Cases : "+recovered+"(↑"+new_recovered+")\
         \nCases Yesterday  : "+confirmed_yday+"(↑"+new_case_yday+")\
         \nTest Positivity Rate    : "+testPositivityRate+"\
         \nUpdated at        : "+lastupdatedtime

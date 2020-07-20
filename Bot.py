@@ -18,7 +18,7 @@ from italy import regionIT
 from usaStateCode import usaStateCode
 from mexico import stateMX
 from malaysiaState import state_malaysia
-from pyshorteners import Shorteners
+#from pyshorteners import Shorteners
 import random
 import pandas as pd 
 import matplotlib
@@ -29,6 +29,7 @@ import xlrd
 from matplotlib.ticker import (AutoMinorLocator, MultipleLocator)
 import flag
 import matplotlib.dates as mdates
+import matplotlib.ticker as ticker
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO)
@@ -468,6 +469,7 @@ def countryWiseStatsCollect(var):
             countryName = str(each["country"])
             new_case = str(each["todayCases"])
             new_deaths = str(each["todayDeaths"])
+            new_recovered = str(each["todayRecovered"])
             casesPerOneMillion = str(each["casesPerOneMillion"])
             deathsPerOneMillion = str(each["deathsPerOneMillion"])
             activePerOneMillion = str(each["activePerOneMillion"])
@@ -487,7 +489,7 @@ def countryWiseStatsCollect(var):
             confirmed_yday = str(each["cases"])
             new_case_yday = str(each["todayCases"])
             deaths_yday = str(each["deaths"])
-    return confirmed,deaths,recovered,populationHere,lastupdatedtime,countryName,new_case,new_deaths,casesPerOneMillion,deathsPerOneMillion,activePerOneMillion,recoveredPerOneMillion,testsPerOneMillion,confirmed_yday,new_case_yday,deaths_yday,active,testPositivityRate,recoveryRate
+    return confirmed,deaths,recovered,populationHere,lastupdatedtime,countryName,new_case,new_deaths,casesPerOneMillion,deathsPerOneMillion,activePerOneMillion,recoveredPerOneMillion,testsPerOneMillion,confirmed_yday,new_case_yday,deaths_yday,active,testPositivityRate,recoveryRate,new_recovered
 
 def countryWiseData(update, context):
     country_code = ' '.join(context.args)
@@ -508,7 +510,7 @@ def countryWiseData(update, context):
         \nActive Cases           : *"+content_k[16]+"*\
         \nConfirmed Cases    : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases    : *"+content_k[2]+"*\
+        \nRecovered Cases    : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday     : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -810,7 +812,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases         : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases  : *"+content_k[2]+"*\
+        \nRecovered Cases  : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -853,7 +855,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -873,7 +875,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases          : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -892,7 +894,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -910,7 +912,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -936,7 +938,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -957,7 +959,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -977,7 +979,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -998,7 +1000,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"*  *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -1020,7 +1022,7 @@ def getLocation(update,context):
         \nActive Cases           : *"+content_k[16]+"*\
         \nConfirmed Cases   : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday     : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate : *"+content_k[17]+"*\
@@ -1039,8 +1041,8 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
-        \nRecovery Rate          : *"+content_k[18]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
+        \nRecovery Rate          : *"+content_k[18]+"* \
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
         \nCurrent Population : *"+content_k[3]+"*\
@@ -1060,7 +1062,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -1082,7 +1084,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases       : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -1104,7 +1106,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases    : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases    : *"+content_k[2]+"*\
+        \nRecovered Cases    : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -1121,7 +1123,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases    : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases            : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases    : *"+content_k[2]+"*\
+        \nRecovered Cases    : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -1141,7 +1143,7 @@ def getLocation(update,context):
         \nActive Cases        : *"+content_k[16]+"*\
         \nConfirmed Cases   : *"+content_k[0]+"* *(↑"+content_k[6]+")*\
         \nDeath Cases           : *"+content_k[1]+"* *(↑"+content_k[7]+")*\
-        \nRecovered Cases   : *"+content_k[2]+"*\
+        \nRecovered Cases   : *"+content_k[2]+"* *(↑"+content_k[19]+")*\
         \nRecovery Rate          : *"+content_k[18]+"*\
         \nCases Yesterday    : *"+content_k[13]+"* *(↑"+content_k[14]+")*\
         \nTest Positivity Rate    : *"+content_k[17]+"*\
@@ -1431,17 +1433,18 @@ def getLocation2(update, context, var, var1):
     captureID(update)
 
 def continent_count(var):
-    continent = requests.get('https://corona.lmao.ninja/v2/continents?yesterday=true&sort')
+    continent = requests.get('https://disease.sh/v3/covid-19/continents?yesterday=false')
     continent_v = continent.json()
     for each in continent_v:
         if str(each["continent"]) == var:
            confirmed = str(each["cases"]) 
            deaths = str(each["deaths"]) 
            recovered = str(each["recovered"])
+           deltarecovered = str(each["todayRecovered"])
            deltaconfirmed = str(each["todayCases"])
            deltadeaths = str(each["todayDeaths"])
            lastUpdatedTime = str(datetime.fromtimestamp((each["updated"])/1000).replace(microsecond=0))
-    return confirmed,deaths,recovered,deltaconfirmed,deltadeaths,lastUpdatedTime
+    return confirmed,deaths,recovered,deltaconfirmed,deltadeaths,lastUpdatedTime,deltarecovered
 
 def asia(update, context):
     continentCount = continent_count("Asia")
@@ -1451,7 +1454,7 @@ def asia(update, context):
     \n\
     \nConfirmed Cases : *"+continentCount[0]+"* *(↑"+continentCount[3]+")*\
     \nDeath Cases        : *"+continentCount[1]+"* *(↑"+continentCount[4]+")*\
-    \nRecovered Cases : *"+continentCount[2]+"*\
+    \nRecovered Cases : *"+continentCount[2]+"* *(↑"+continentCount[6]+")*\
     \nThis data was last updated at of : *"+continentCount[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     print("This User checked Asia: "+update.message.from_user.first_name)
     logger.info("Asia handler used ", update.message.chat.id, update.message.from_user.first_name)
@@ -1465,7 +1468,7 @@ def africa(update, context):
     \n\
     \nConfirmed Cases : *"+continentCount[0]+"* *(↑"+continentCount[3]+")*\
     \nDeath Cases        : *"+continentCount[1]+"* *(↑"+continentCount[4]+")*\
-    \nRecovered Cases : *"+continentCount[2]+"*\
+    \nRecovered Cases : *"+continentCount[2]+"* *(↑"+continentCount[6]+")*\
     \nThis data was last updated at of : *"+continentCount[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     print("This User checked Asia: "+update.message.from_user.first_name)
     logger.info("Africa handler used ", update.message.chat.id, update.message.from_user.first_name)
@@ -1479,7 +1482,7 @@ def northamerica(update, context):
     \n\
     \nConfirmed Cases : *"+continentCount[0]+"* *(↑"+continentCount[3]+")*\
     \nDeath Cases        : *"+continentCount[1]+"* *(↑"+continentCount[4]+")*\
-    \nRecovered Cases : *"+continentCount[2]+"*\
+    \nRecovered Cases : *"+continentCount[2]+"* *(↑"+continentCount[6]+")*\
     \nThis data was last updated at of : *"+continentCount[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     print("This User checked Asia: "+update.message.from_user.first_name)
     logger.info("North America handler used ", update.message.chat.id, update.message.from_user.first_name)
@@ -1493,7 +1496,7 @@ def europe(update, context):
     \n\
     \nConfirmed Cases : *"+continentCount[0]+"* *(↑"+continentCount[3]+")*\
     \nDeath Cases        : *"+continentCount[1]+"* *(↑"+continentCount[4]+")*\
-    \nRecovered Cases : *"+continentCount[2]+"*\
+    \nRecovered Cases : *"+continentCount[2]+"* *(↑"+continentCount[6]+")*\
     \nThis data was last updated at of : *"+continentCount[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     print("This User checked Asia: "+update.message.from_user.first_name)
     logger.info("Europe handler used ", update.message.chat.id, update.message.from_user.first_name)
@@ -1507,21 +1510,21 @@ def southamerica(update, context):
     \n\
     \nConfirmed Cases : *"+continentCount[0]+"* *(↑"+continentCount[3]+")*\
     \nDeath Cases        : *"+continentCount[1]+"* *(↑"+continentCount[4]+")*\
-    \nRecovered Cases : *"+continentCount[2]+"*\
+    \nRecovered Cases : *"+continentCount[2]+"* *(↑"+continentCount[6]+")*\
     \nThis data was last updated at of : *"+continentCount[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     print("This User checked Asia: "+update.message.from_user.first_name)
     logger.info("South America handler used ", update.message.chat.id, update.message.from_user.first_name)
     captureID(update)
 
 def australia(update, context):
-    continentCount = continent_count("Oceania")
+    continentCount = continent_count("Australia/Oceania")
     chat_id = update.message.chat_id
     context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     context.bot.send_message(chat_id=chat_id, text="The numbers for *Australia* are as below\
     \n\
     \nConfirmed Cases : *"+continentCount[0]+"* *(↑"+continentCount[3]+")*\
     \nDeath Cases         : *"+continentCount[1]+"* *(↑"+continentCount[4]+")*\
-    \nRecovered Cases : *"+continentCount[2]+"*\
+    \nRecovered Cases : *"+continentCount[2]+"* *(↑"+continentCount[6]+")*\
     \nThis data was last updated at of : *"+continentCount[5]+"*",parse_mode=telegram.ParseMode.MARKDOWN)
     print("This User checked Asia: "+update.message.from_user.first_name)
     logger.info("Australia handler used ", update.message.chat.id, update.message.from_user.first_name)
@@ -1532,12 +1535,15 @@ def getLocation3(update, context, var, var1):
     current_lon = var1
     G_stateName = germanToEnglish(update, context, current_lat, current_lon)
     jsonContent = apiRequestGermany()
-    for each in jsonContent['states']:    
+    for each in jsonContent['states']:
+        #print(each["name"])    
         if str(each["name"]) == G_stateName:
+            if "*" in G_stateName:
+                G_stateName = G_stateName.replace("*","")
             confirmed = str(each["count"]) 
             deaths = str(each["deaths"]) 
             newcases = str(each["difference"])
-    print(G_stateName)
+    
     try:
         context.bot.send_message(chat_id=update.message.chat_id,text="The location you shared is in state *"+G_stateName+"*\
         \n\
@@ -1620,6 +1626,8 @@ def getLocationNL(update, context, cityNL):
     cityNew = cityNL
     if cityNew == "The Hague":
         cityNew = "'s-Gravenhage"
+    if cityNew == "Nuenen c.a.":
+        cityNew = "Nuenen, Gerwen en Nederwetten"
     jsonContent = apiRequestNL()
     print(cityNew)
     for each in jsonContent["features"]:    
@@ -1892,34 +1900,37 @@ def germanToEnglish(update,context,var,var1):
     current_lon = var1
     contents = requests.get("https://locationiq.com/v1/reverse.php?key="+APIKey_LQ+"&lat="+current_lat+"&lon="+current_lon+"&format=json").json()
     try:
-        state = contents["address"]["state"]
-        if state == "North Rhine-Westphalia":
-            state = "Nordrhein-West­falen"
-        elif state == "Baden-Württemberg":
-            state = "Baden-Württem­berg"
-        elif state =="Bavaria":
+        state1 = contents["address"]["state"]
+        if state1 == "North Rhine-Westphalia":
+            state = "Nord­rhein-West­falen"
+        elif state1 == "Baden-Württemberg":
+            state = "Baden-Württem­berg*"
+        elif state1 =="Bavaria":
             state = "Bayern"
-        elif state =="Free Hanseatic City of Bremen":
+        elif state1 =="Free Hanseatic City of Bremen":
             state = "Bremen"
-        elif state =="Hesse":
+        elif state1 =="Hesse":
             state = "Hessen"
-        elif state =="Mecklenburg-Vorpommern":
+        elif state1 =="Mecklenburg-Vorpommern":
             state = "Mecklenburg-Vor­pommern"
-        elif state =="Lower Saxony":
+        elif state1 =="Lower Saxony":
             state = "Niedersachsen"
-        elif state =="Rhineland-Palatinate":
+        elif state1 =="Rhineland-Palatinate":
             state = "Rhein­land-Pfalz"
-        elif state =="Saxony":
-            state = "Sachsen"
-        elif state =="Saxony-Anhalt":
+        elif state1 =="Saxony":
+            state = "Sachsen*"
+        elif state1 =="Saxony-Anhalt":
             state = "Sachsen-Anhalt"
-        elif state =="Schleswig-Holstein":
+        elif state1 =="Schleswig-Holstein":
             state = "Schles­wig-Holstein"
-        elif state =="Thuringia":
+        elif state1 =="Thuringia":
             state = "Thüringen"
+        elif state1 =="Saarland":
+            state = "Saarland*"
     except:
-        state = contents["address"]["city"]
-
+        state1 = contents["address"]["city"]
+        if state1 == "Hamburg":
+            state = "Hamburg*"
     return state
 
 def getLocationMY(update, context, stateMY):
@@ -1982,12 +1993,12 @@ def countryTrend(update, context, code, conf, dead, countryName):
     try:
         context.bot.send_photo(chat_id=update.message.chat_id, photo=open("/home/ravindra/country/"+ISO+".png",'rb'))
     except:
-        url = 'https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide.xlsx'
-        wget.download(url)
+        #url = 'https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide.xlsx'
+        #wget.download(url)
     #https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide.xlsx
         ##Read the data
-        data = pd.read_excel('COVID-19-geographic-disbtribution-worldwide.xlsx')
-
+        #data = pd.read_excel('COVID-19-geographic-disbtribution-worldwide.xlsx')
+        data = pd.read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
         #Change it to the country of your choice
         
         ##Reverse the data
@@ -1996,8 +2007,8 @@ def countryTrend(update, context, code, conf, dead, countryName):
         ##Remove the dates with no cases
         data = data[data.cases != 0]
 
-        #indexNames = data[ data['popData2018'] == 3000].index
-        #data.drop(indexNames , inplace=True)
+        indexNames = data[data['geoId'] =='JPG11668'].index
+        data.drop(indexNames , inplace=True)
         ##Remove useless columns
         data = data.drop(columns=['day', 'month', 'year', 'countryterritoryCode', 'popData2019'])
         #data = data.drop(data[data['geoId'] =='JPG11668'].index, inplace = True)
@@ -2050,10 +2061,13 @@ def countryTrend(update, context, code, conf, dead, countryName):
         #ax.set(xlabel='Date', ylabel='Percentage', title='Death Percentage')
         #ax.grid()
         ax.legend()
+
+        tick_spacing = 10
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
         plt.setp(ax.get_xticklabels(), rotation=45, horizontalalignment='right')
         plt.savefig("/home/ravindra/country/"+ISO+'.png')
     
-        os.remove("COVID-19-geographic-disbtribution-worldwide.xlsx")
+        #os.remove("COVID-19-geographic-disbtribution-worldwide.xlsx")
         #os.remove(ISO+'.png')
         plt.cla()
         plt.clf()
@@ -2137,8 +2151,111 @@ def indianStatesSorted(update, context):
     \n\
     \n"+stateName_confirmed+"",parse_mode=telegram.ParseMode.MARKDOWN)
 
+def flight(update,context,code):
+    if str(code).upper() == "NL":
+        link = "https://www.nederlandwereldwijd.nl/documenten/vragen-en-antwoorden/reisadvies-india"
+        link2 = "https://twitter.com/airindiain/status/1282249731192745986"
+    elif str(code).upper() == "FR":
+        link = "https://twitter.com/AirFranceIN/status/1281498072913260544"
+    elif str(code).upper() == "DE":
+        link = "https://www.lufthansa.com/in/en/flight-information"
+        link2 = "https://twitter.com/airindiain/status/1282249350521839616"
+    elif str(code).upper() == "GB":
+        link = "https://www.gov.uk/foreign-travel-advice/india/return-to-the-uk"
+        link2 = "https://twitter.com/airindiain/status/1282249891322802176"
+    elif str(code).upper() == "US":
+        link = "https://in.usembassy.gov/covid-19-information/"
+        link2 = ""
+    elif str(code).upper() == "SG":
+        link = "https://twitter.com/airindiain/status/1281883827036553216"
+        link2 = ""
+    elif str(code).upper() == "CA":
+        link = "https://twitter.com/airindiain/status/1281893991428919297"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "AE":
+        link = "https://twitter.com/airindiain/status/1281536917184512001"
+        link2 = ""
+    elif str(code).upper() == "JP":
+        link = "https://twitter.com/airindiain/status/1281206467178065921"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "AU":
+        link = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "BD":
+        link = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "KE":
+        link = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "KG":
+        link = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "PH":
+        link = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "MM":
+        link = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "RU":
+        link = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "LK":
+        link = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "ZA":
+        link = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "TH":
+        link = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "UA":
+        link = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "VN":
+        link = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+    elif str(code).upper() == "SA":
+        link = "https://www.bangaloreaviation.com/2020/06/schedule-of-phase-4-vande-bharat-repatriation-flights-to-india.html"
+        link2 = "https://www.bangaloreaviation.com/2020/06/air-india-phase-4-repatriation-flights-schedule-vande-bharat-flights-from-india-to-us-uk-australia-me-and-more.html"
+    return link,link2
+
+def repatriationFlightFromINDIAto(update,context):
+    country_code = ' '.join(context.args)
+    letter = country_code.capitalize()
+    print(country_code)
+    if (country_code.isdigit()):
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.message.chat_id, text="Add a country code, Ex:'/repatriationFlightFromINDIAto NL'",parse_mode=telegram.ParseMode.MARKDOWN)
+    elif country_code == "":
+        context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(chat_id=update.message.chat_id, text="Add a country code, Ex:'/repatriationFlightFromINDIAto NL'",parse_mode=telegram.ParseMode.MARKDOWN)
+    else:
+        try:
+            embassy_links = flight(update,context,letter)
+            FlagIcon = flag.flag(letter)
+            context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+            context.bot.send_message(chat_id=update.effective_chat.id, text="Check the links for more details about *"+letter.upper()+"* "+FlagIcon+" below\
+            \n\
+            \n*"+embassy_links[0]+"*\
+            \n\
+            \n*"+embassy_links[1]+"*\
+            \n\
+            \nMinistry of external Affairs, India (VANDE BHARATH Mission) flight list\
+            \n\
+            \n*https://www.mea.gov.in/phase-4.htm*",parse_mode=telegram.ParseMode.MARKDOWN,disable_web_page_preview=True)
+            #context.bot.send_photo(chat_id=update.message.chat_id, photo=photo_file,parse_mode=telegram.ParseMode.MARKDOWN)
+        except:
+            context.bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+            context.bot.send_message(chat_id=update.message.chat_id, text="No information is available for this country at the moment, Check Ministry of external Affairs, India (VANDE BHARATH Mission) flight list\
+            \n\
+            \n*https://www.mea.gov.in/phase-4.htm*",parse_mode=telegram.ParseMode.MARKDOWN)
+        print("This User checked flight :"+update.message.from_user.first_name)
+        logger.info("repatriation handler used ", update.message.chat.id, update.message.from_user.first_name)
+        captureID(update)
+
 def main():
-    BotToken = ""
+    BotToken = "1290706743:AAEkj9IDuTaiNltikENKffVgv243hrj52As"
+    #BotToken = "1019684255:AAGiUul3P1QpiPNi_z00Py5NTSCCm7TiRqE"
     updater = Updater(BotToken,use_context=True)
     print (dateToday())
     #print(get_state_msg())
@@ -2174,6 +2291,7 @@ def main():
     dp.add_handler(CommandHandler('commands',commands))
     dp.add_handler(CommandHandler('news',getNews))
     dp.add_handler(CommandHandler('travelAdvice',travelAlert))
+    dp.add_handler(CommandHandler('repatriationFlightFromINDIAto',repatriationFlightFromINDIAto))
     dp.add_handler(MessageHandler(Filters.text, handle_message))
     dp.add_handler(MessageHandler(Filters.location,getLocation))
     updater.start_polling()
@@ -2181,3 +2299,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
