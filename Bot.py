@@ -2254,8 +2254,7 @@ def repatriationFlightFromINDIAto(update,context):
         captureID(update)
 
 def main():
-    BotToken = "1290706743:AAEkj9IDuTaiNltikENKffVgv243hrj52As"
-    #BotToken = "1019684255:AAGiUul3P1QpiPNi_z00Py5NTSCCm7TiRqE"
+    BotToken = ""
     updater = Updater(BotToken,use_context=True)
     print (dateToday())
     #print(get_state_msg())
