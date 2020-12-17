@@ -2005,16 +2005,16 @@ def countryTrend(update, context, code, conf, dead, countryName):
         data = data.reindex(index=data.index[::-1])
 
         ##Remove the dates with no cases
-        data = data[data.cases != 0]
+        data = data[data.cases_weekly != 0]
 
         indexNames = data[data['geoId'] =='JPG11668'].index
         data.drop(indexNames , inplace=True)
         ##Remove useless columns
-        data = data.drop(columns=['day', 'month', 'year', 'countryterritoryCode', 'popData2019'])
+        data = data.drop(columns=['year_weekly', 'countryterritoryCode', 'popData2019'])
         #data = data.drop(data[data['geoId'] =='JPG11668'].index, inplace = True)
 
         ## Make the name of the columns more clean
-        data.rename(columns={"countriesAndTerritories": "Country", 'dateRep': 'Date', 'cases': 'Cases', 'deaths': 'Deaths', 'geoId': 'Iso'}, inplace=True)
+        data.rename(columns={"countriesAndTerritories": "Country", 'dateRep': 'Date', 'cases_weekly': 'Cases', 'deaths_weekly': 'Deaths', 'geoId': 'Iso'}, inplace=True)
 
         ##Use only data for specific country
         data = data[data['Iso'].str.contains(ISO)== True]
@@ -2049,6 +2049,7 @@ def countryTrend(update, context, code, conf, dead, countryName):
         ax.plot(data.set_index('Date')['Deaths'], color='red',label='Total Deaths= '+deaths,linestyle='--',linewidth=8.0)
         ax.set(xlabel='Date', ylabel='New cases')
         ax.set_title(country+': Daily New Cases And New Deaths',fontsize= 80)
+        ax.text(0, 0, "by @@CoronaWorldStatsBot; based on data by JHUCSSE", fontsize=6, va="bottom", transform=ax.transAxes)
         #ax.grid(b=True, which='major', color='b', linestyle='-',linewidth=4)
         ax.grid()
         ax.xaxis.get_label().set_fontsize(50)
@@ -2062,7 +2063,7 @@ def countryTrend(update, context, code, conf, dead, countryName):
         #ax.grid()
         ax.legend()
 
-        tick_spacing = 10
+        tick_spacing = 15
         ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
         plt.setp(ax.get_xticklabels(), rotation=45, horizontalalignment='right')
         plt.savefig("/home/ravindra/country/"+ISO+'.png')
